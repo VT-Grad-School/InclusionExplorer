@@ -33,6 +33,45 @@ angular.module('inclusionApp')
       .attr('width', width)
       .attr('height', height);
 
+    function splitAndTrim (sourceStr) {
+      if (sourceStr) {
+        return sourceStr.split(';').map(function (item) {
+          return item.trim();
+        });
+      } else {
+        return [];
+      }
+    }
+
+    $scope.splitTrimAndAccumulateUniqueValues = function (property, list) {
+      var results = splitAndTrim(list[property]);
+      results.forEach(function (value) {
+        if ($scope.sourceCategories[property].hasOwnProperty(value)) {
+          $scope.sourceCategories[property][value].push(list['Program Name']);
+        } else {
+          $scope.sourceCategories[property][value] = [list['Program Name']];
+        }
+      });
+      return results;
+    }
+
+    $scope.sourceCategories = {};
+    $scope.sourceCategoryNames = ['College or VP', 'Inclusive Excellence area', 'constituent group'];
+    $scope.sourceCategoryNames.forEach(function (name) {
+      $scope.sourceCategories[name] = {};
+    });
+
+    d3.csv('/College-VP_Program_List.csv', function (initiatives) {
+      console.log(initiatives);
+      initiatives.forEach(function (initiative) {
+        initiative['Inclusive Excellence area'] = $scope.splitTrimAndAccumulateUniqueValues('Inclusive Excellence area', initiative);
+        initiative['constituent group'] = $scope.splitTrimAndAccumulateUniqueValues('constituent group', initiative);
+        initiative['College or VP'] = $scope.splitTrimAndAccumulateUniqueValues('College or VP', initiative);
+        // initiative['constituent group'] = splitAndTrim(initiative['constituent group']);
+      });
+      window.initiatives = initiatives;
+    });
+
     $http.get('/initiatives.json')
       .success(function(graph) {
         console.log(graph);
