@@ -42,6 +42,7 @@
         <p>{{selectedNode.Description}}</p>
       </div>
       <div ng-if="selectedNode.hasOwnProperty('type') && selectedNode.type!=='Program' && sourceCategories.hasOwnProperty(selectedNode.type)">
+        <h3>Inclusion Initiatives</h3>
         <ul>
           <li ng-repeat="initiative in sourceCategories[selectedNode.type][selectedNode.name].initiatives">
             <a ng-href="#/?node={{initiative.nodeIdx}}" ng-mouseenter="onNodeMouseEnter(graph.nodes[initiative.nodeIdx], $event)" ng-mouseleave="onNodeMouseLeave()" ng-click="clickedInitiative(nodes[initiative.nodeIdx], $event)">{{initiative.name}}</a>
