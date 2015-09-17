@@ -19,13 +19,13 @@ angular.module('inclusionApp')
     $scope.header2 = '';
 
     var toolTip = d3.select(document.getElementById('toolTip'));
-    var width = 960,
-      height = 900;
+    var width = 800,
+      height = 600;
 
     var color = d3.scale.category10();
 
     var force = d3.layout.force()
-      .linkDistance(10)
+      .linkDistance(2)
       .linkStrength(2)
       .size([width, height]);
 

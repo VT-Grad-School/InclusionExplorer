@@ -32,11 +32,14 @@ angular
         controller: 'AboutCtrl',
         controllerAs: 'about'
       })
-      .when('/initiatives', {
-        templateUrl: 'views/initiatives.html',
-        controller: 'InitiativesCtrl',
-        controllerAs: 'initiatives'
+      .when('/contact', {
+        templateUrl: 'views/contact.html',
       })
+      // .when('/initiatives', {
+      //   templateUrl: 'views/initiatives.html',
+      //   controller: 'InitiativesCtrl',
+      //   controllerAs: 'initiatives'
+      // })
       .otherwise({
         redirectTo: '/'
       });

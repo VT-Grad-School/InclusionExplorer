@@ -111,3 +111,6 @@ path.connected-link-clicked {
   stroke: #660000;
 }
 
+.node:hover {
+  cursor: pointer;
+}
