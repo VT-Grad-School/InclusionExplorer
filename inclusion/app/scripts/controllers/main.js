@@ -110,7 +110,7 @@ angular.module('inclusionApp')
     $scope.selectedNode = {};
     $scope.hoverNode = {};
 
-    d3.csv('/College-VP_Program_List.csv', function (initiatives) {
+    d3.csv('College-VP_Program_List.csv', function (initiatives) {
       $scope.initiatives = initiatives;
       // console.log($scope.initiatives);
       $scope.initiatives.forEach(function (initiative) {
