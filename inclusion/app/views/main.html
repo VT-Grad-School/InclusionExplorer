@@ -17,19 +17,25 @@
       <div ng-if="selectedNode.hasOwnProperty('Inclusive Excellence area') && selectedNode['Inclusive Excellence area'].length > 0">
         <h3>Inclusive Excellence areas</h3>
         <ul>
-          <li ng-repeat="item in selectedNode['Inclusive Excellence area']">{{item}}</li>
+          <li ng-repeat="item in selectedNode['Inclusive Excellence area']">
+            <a ng-href="#/?node={{sourceCategories['Inclusive Excellence area'][item].nodeIdx}}" ng-mouseenter="onNodeMouseEnter(graph.nodes[sourceCategories['Inclusive Excellence area'][item].nodeIdx], $event)" ng-mouseleave="onNodeMouseLeave()" ng-click="clickedInitiative(nodes[sourceCategories['Inclusive Excellence area'][item].nodeIdx], $event)">{{item}}</a>
+          </li>
         </ul>
       </div>
       <div ng-if="selectedNode.hasOwnProperty('constituent group') && selectedNode['constituent group'].length > 0">
         <h3>Constituent Groups</h3>
         <ul>
-          <li ng-repeat="item in selectedNode['constituent group']">{{item}}</li>
+          <li ng-repeat="item in selectedNode['constituent group']">
+            <a ng-href="#/?node={{sourceCategories['constituent group'][item].nodeIdx}}" ng-mouseenter="onNodeMouseEnter(graph.nodes[sourceCategories['constituent group'][item].nodeIdx], $event)" ng-mouseleave="onNodeMouseLeave()" ng-click="clickedInitiative(nodes[sourceCategories['constituent group'][item].nodeIdx], $event)">{{item}}</a>
+          </li>
         </ul>
       </div>
       <div ng-if="selectedNode.hasOwnProperty('College or VP') && selectedNode['College or VP'].length > 0">
         <h3>College or VPs</h3>
         <ul>
-          <li ng-repeat="item in selectedNode['College or VP']">{{item}}</li>
+          <li ng-repeat="item in selectedNode['College or VP']">
+            <a ng-href="#/?node={{sourceCategories['College or VP'][item].nodeIdx}}" ng-mouseenter="onNodeMouseEnter(graph.nodes[sourceCategories['College or VP'][item].nodeIdx], $event)" ng-mouseleave="onNodeMouseLeave()" ng-click="clickedInitiative(nodes[sourceCategories['College or VP'][item].nodeIdx], $event)">{{item}}</a>
+          </li>
         </ul>
       </div>
       <div ng-if="selectedNode.hasOwnProperty('Description')">
