@@ -95,5 +95,19 @@ div.header3 {
 
 path.connected-link {
   stroke-width:2px;
-  stroke:black;
+  stroke:#ff6600;
 }
+
+path.connected-link-clicked {
+  stroke-width: 2px;
+  stroke: #660000;
+}
+
+.node.hover-node {
+  stroke: #ff6600;
+}
+
+.node.clicked-node {
+  stroke: #660000;
+}
+

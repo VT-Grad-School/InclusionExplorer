@@ -1,19 +1,47 @@
 <div class="row">
   <div id="toolTip" class="tooltip" style="width: 250px; height: 100px; position: absolute; left: 910px; top: 226px; opacity: 0;">
-    <div id="header1" class="header2">{{header1}}</div>
+    <div id="header1" class="header2">{{hoverNode.type}}</div>
     <div class="header-rule"></div>
-    <div id="head" class="header">{{head}}</div>
-    <div class="header-rule"></div>
-    <div id="header2" class="header3">{{header2}}</div>
+    <div id="head" class="header">{{hoverNode.name}}</div>
+    <!-- <div class="header-rule"></div>
+    <div id="header2" class="header3">{{header2}}</div> -->
     <div class="tooltipTail"></div>
   </div>
   <div id="initiatives-vis" class="col-md-9">
-    {{sourceCategories}}<br/><br/><br/>
-    {{sourceCategoryNames}}<br/><br/><br/>
-    {{initiatives}}<br/><br/><br/>
-    {{graph}}<br/><br/><br/>
     
   </div>
   <div class="col-md-3">
+    <h3>{{selectedNode.type}}</h3>
+    <h2>{{selectedNode.name}}</h2>
+    <div>
+      <div ng-if="selectedNode.hasOwnProperty('Inclusive Excellence area') && selectedNode['Inclusive Excellence area'].length > 0">
+        <h3>Inclusive Excellence areas</h3>
+        <ul>
+          <li ng-repeat="item in selectedNode['Inclusive Excellence area']">{{item}}</li>
+        </ul>
+      </div>
+      <div ng-if="selectedNode.hasOwnProperty('constituent group') && selectedNode['constituent group'].length > 0">
+        <h3>Constituent Groups</h3>
+        <ul>
+          <li ng-repeat="item in selectedNode['constituent group']">{{item}}</li>
+        </ul>
+      </div>
+      <div ng-if="selectedNode.hasOwnProperty('College or VP') && selectedNode['College or VP'].length > 0">
+        <h3>College or VPs</h3>
+        <ul>
+          <li ng-repeat="item in selectedNode['College or VP']">{{item}}</li>
+        </ul>
+      </div>
+      <div ng-if="selectedNode.hasOwnProperty('Description')">
+        <p>{{selectedNode.Description}}</p>
+      </div>
+      <div ng-if="selectedNode.hasOwnProperty('type') && selectedNode.type!=='Program' && sourceCategories.hasOwnProperty(selectedNode.type)">
+        <ul>
+          <li ng-repeat="initiative in sourceCategories[selectedNode.type][selectedNode.name].initiatives">
+            <a ng-href="#/?node={{initiative.nodeIdx}}" ng-mouseenter="onNodeMouseEnter(graph.nodes[initiative.nodeIdx], $event)" ng-mouseleave="onNodeMouseLeave()" ng-click="clickedInitiative(nodes[initiative.nodeIdx], $event)">{{initiative.name}}</a>
+          </li>
+        </ul>
+      </div>
+    </div>
   </div>
 </div>

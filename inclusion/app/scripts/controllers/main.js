@@ -8,7 +8,7 @@
  * Controller of the inclusionApp
  */
 angular.module('inclusionApp')
-  .controller('MainCtrl', function($scope, $http) {
+  .controller('MainCtrl', function($scope, $http, $location) {
     // this.awesomeThings = [
     //   'HTML5 Boilerplate',
     //   'AngularJS',
@@ -20,18 +20,31 @@ angular.module('inclusionApp')
 
     var toolTip = d3.select(document.getElementById('toolTip'));
     var width = 960,
-      height = 500;
+      height = 900;
 
-    var color = d3.scale.category20();
+    var color = d3.scale.category10();
 
     var force = d3.layout.force()
       .linkDistance(10)
       .linkStrength(2)
       .size([width, height]);
 
+    $scope.unSetSelectedNode = function () {
+      d3.selectAll('.clicked-node').classed('clicked-node', false);
+      d3.selectAll('.connected-link-clicked').classed('connected-link-clicked', false);
+      $scope.selectedNode = {};
+    };
+
     var svg = d3.select('#initiatives-vis').append('svg')
       .attr('width', width)
-      .attr('height', height);
+      .attr('height', height)
+      .on('click', function () {
+        console.log('clicked svg');
+        $scope.$apply(function () {
+          $location.search('node', null);
+        });
+        $scope.unSetSelectedNode();
+      });
 
     function splitAndTrim (sourceStr) {
       if (sourceStr) {
@@ -43,10 +56,23 @@ angular.module('inclusionApp')
       }
     }
 
+    $scope.clickedInitiative = function (initiative, event) {
+      $scope.setSelectedNode(initiative, event);
+      $scope.hoverNode = {};
+      $scope.onNodeMouseLeave();
+    };
+
 
     $scope.sourceCategories = {};
     $scope.links = {};
     // $scope.nodes = {};
+
+    $scope.types = {
+      'Program': 0,
+      'College or VP': 1,
+      'Inclusive Excellence area': 2,
+      'constituent group': 3,
+    };
 
     $scope.sourceCategoryNames = ['College or VP', 'Inclusive Excellence area', 'constituent group'];
     $scope.sourceCategoryNames.forEach(function (name) {
@@ -81,10 +107,12 @@ angular.module('inclusionApp')
 
 
     $scope.richInitiativeData = {};
+    $scope.selectedNode = {};
+    $scope.hoverNode = {};
 
     d3.csv('/College-VP_Program_List.csv', function (initiatives) {
       $scope.initiatives = initiatives;
-      console.log($scope.initiatives);
+      // console.log($scope.initiatives);
       $scope.initiatives.forEach(function (initiative) {
         initiative.nodeIdx = $scope.graph.nodes.length;
         $scope.graph.nodes.push(initiative);
@@ -97,129 +125,157 @@ angular.module('inclusionApp')
       });
       window.graph = $scope.graph;
       window.initiatives = $scope.initiatives;
-      window.richInitiativeData = $scope.richInitiativeData;
-      // var graph = initiatives;
-
-      // already have nodes for
-      //    all programs
-      //        with many details
-
-      // create nodes for:
-      //    all colleges/entities
-      //    all areas
-      //    all constituent groups
-
       $scope.sourceCategoryNames.forEach(function (name) { // name might be "areas"
-        console.log(Object.keys($scope.sourceCategories[name])); //the obj.keys would be all the areas
-
         Object.keys($scope.sourceCategories[name]).forEach(function (value) {
           $scope.richInitiativeData[value] = {
             name: value,
             type: name,
             nodeIdx: $scope.graph.nodes.length
           };
-          // $scope.graph.nodes.push($scope.richInitiativeData[value]);
         });
-        // $scope.graph.nodes = $scope.graph.nodes.concat(Object.keys($scope.sourceCategories[name]));
       });
+      window.richInitiativeData = $scope.richInitiativeData;
+      window.ctgs = $scope.sourceCategories;
 
       // create links between these higher-level nodes and the associated program nodes
 
-      console.log($scope.graph);
-      var nodes = $scope.graph.nodes.slice(),
-        links = [],
+      // console.log($scope.graph);
+      $scope.nodes = $scope.graph.nodes.slice();
+      var links = [],
         bilinks = [];
 
-      // $scope.graph.links.forEach(function(link) {
-      //   // console.log(nodes[link.source]);
-      //   var s = nodes[link.source],
-      //     t = nodes[link.target],
-      //     i = {}; // intermediate node
-      //   s.id = link.source;
-      //   t.id = link.target;
-      //   nodes.push(i);
-      //   links.push({
-      //     source: s,
-      //     target: i
-      //   }, {
-      //     source: i,
-      //     target: t
-      //   });
-      //   bilinks.push([s, i, t]);
-      // });
+      $scope.graph.links.forEach(function(link) {
+        // console.log(nodes[link[0]]);
+        var s = $scope.nodes[link[0]],
+          t = $scope.nodes[link[1]],
+          i = {}; // intermediate node
+        s.id = link[0];
+        t.id = link[1];
+        $scope.nodes.push(i);
+        links.push({
+          source: s,
+          target: i
+        }, {
+          source: i,
+          target: t
+        });
+        bilinks.push([s, i, t]);
+      });
 
-      // force
-      //   .nodes(nodes)
-      //   .links(links)
-      //   .start();
+      force
+        .nodes($scope.nodes)
+        .links(links)
+        .start();
 
-      // var link = svg.selectAll('.link')
-      //   .data(bilinks)
-      //   .enter().append('path')
-      //   .attr('class', function(currentLink) {
-      //     var classes = ['link'];
-      //     // console.log(currentLink);
-      //     classes.push('n' + currentLink[0].id);
-      //     classes.push('n' + currentLink[2].id);
-      //     return classes.join(' ');
-      //   });
+      var link = svg.selectAll('.link')
+        .data(bilinks)
+        .enter().append('path')
+        .attr('class', function(currentLink) {
+          var classes = ['link'];
+          // console.log(currentLink);
+          classes.push('n' + currentLink[0].id);
+          classes.push('n' + currentLink[2].id);
+          return classes.join(' ');
+        });
 
-      // var node = svg.selectAll('.node')
-      //   .data(graph.nodes)
-      //   .enter().append('circle')
-      //   .attr('class', 'node')
-      //   .attr('r', 5)
-      //   .style('fill', function(d) {
-      //     return color(d.group);
-      //   })
-      //   .call(force.drag);
+      var node = svg.selectAll('.node')
+        .data(graph.nodes)
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', 10)
+        .attr('id', function (d) {
+          return 'node-'+d.nodeIdx;
+        })
+        .style('fill', function(d) {
+          return color($scope.types[d.type]);
+        })
+        .call(force.drag);
 
-      // node.append('title')
-      //   .text(function(d) {
-      //     // console.log(d);
-      //     return d.name;
-      //   });
+      node.append('title')
+        .text(function(d) {
+          // console.log(d);
+          return d.name;
+        });
 
+      $scope.setSelectedNode = function (selected, evt) {
+        if (evt) {
+          evt.stopPropagation();
+        }
 
-      // // node.on('click', function (clicked) {
-      // node.on('mouseover', function(clicked) {
-      //   $scope.$apply(function () {
-      //     console.log('clicked', clicked);
-      //     toolTip.transition()
-      //       .duration(200)
-      //       .style('opacity', '.9');
+        $scope.selectedNode = selected;
+        d3.selectAll('.clicked-node').classed('clicked-node', false);
+        d3.select('#node-'+$scope.selectedNode.id).classed('clicked-node', true);
+        d3.selectAll('.connected-link-clicked').classed('connected-link-clicked', false);
+        d3.selectAll('.link.n' + $scope.selectedNode.id).classed('connected-link-clicked', true);
+      };
 
-      //     $scope.header1 = 'Congress';
-      //     $scope.head = clicked.name;
-      //     console.log($scope.head);
-      //     $scope.header2 = 'Total Recieved: ' + clicked.group;
-      //     toolTip.style('left', (d3.event.pageX + 15) + 'px')
-      //       .style('top', (d3.event.pageY - 75) + 'px')
-      //       .style('height', '100px');
+      node.on('click', function (clicked) {
+        console.log(clicked);
+        $location.search('node', clicked.id);
+        $scope.$apply(function () {
+          $scope.setSelectedNode(clicked, d3.event);
+        });
+      });
 
-      //     // console.log(d3.selectAll('.link.n'+clicked.id));
-      //     console.log(d3.selectAll('.link.n' + clicked.id));
-      //     d3.selectAll('.link.n' + clicked.id).classed('connected-link', true);
-      //     // highlightLinks(clicked,true);
-          
-      //   });
-      // });
+      $scope.onNodeMouseEnter = function (clicked, evt) {
+        $scope.hoverNode = clicked;
+        d3.selectAll('.hover-node').classed('hover-node', false);
+        d3.select('#node-'+clicked.id).classed('hover-node', true);
+        toolTip.transition()
+          .duration(200)
+          .style('opacity', '.9');
 
-      // node.on('mouseout', function() {
-      //   toolTip.transition() // declare the transition properties to fade-out the div
-      //     .duration(500) // it shall take 500ms
-      //     .style('opacity', '0'); // and go all the way to an opacity of nil
-      //   d3.selectAll('.link.connected-link').classed('connected-link', false);
-      // });
+        $scope.head = clicked.name;
+        $scope.header2 = clicked;
+        var event = d3.event;
+        if (event === null) {
+          event = {
+            pageX: clicked.x,
+            pageY: clicked.y,
+          };
+        }
+        toolTip.style('left', (event.pageX + 15) + 'px')
+          .style('top', (event.pageY - 75) + 'px')
+          .style('height', '100px');
 
-      // force.on('tick', function() {
-      //   link.attr('d', function(d) {
-      //     return 'M' + d[0].x + ',' + d[0].y + 'S' + d[1].x + ',' + d[1].y + ' ' + d[2].x + ',' + d[2].y;
-      //   });
-      //   node.attr('transform', function(d) {
-      //     return 'translate(' + d.x + ',' + d.y + ')';
-      //   });
-      // });
+        d3.selectAll('.link.n' + clicked.id).classed('connected-link', true);
+      };
+
+      node.on('mouseover', function(clicked) {
+        $scope.$apply(function () {
+          $scope.onNodeMouseEnter(clicked);
+        });
+      });
+
+      $scope.onNodeMouseLeave = function () {
+        d3.selectAll('.hover-node').classed('hover-node', false);
+        toolTip.transition() // declare the transition properties to fade-out the div
+          .duration(500) // it shall take 500ms
+          .style('opacity', '0'); // and go all the way to an opacity of nil
+        d3.selectAll('.link.connected-link').classed('connected-link', false);
+      };
+
+      node.on('mouseout', function() {
+        $scope.onNodeMouseLeave();
+      });
+
+      force.on('tick', function() {
+        link.attr('d', function(d) {
+          return 'M' + d[0].x + ',' + d[0].y + 'S' + d[1].x + ',' + d[1].y + ' ' + d[2].x + ',' + d[2].y;
+        });
+        node.attr('transform', function(d) {
+          return 'translate(' + d.x + ',' + d.y + ')';
+        });
+      });
+
+      console.log('done setting up?');
+      if ($location.search().hasOwnProperty('node')) {
+        console.log($location.search());
+        console.log($location.search().node);
+        console.log($scope.nodes[$location.search().node]);
+        $scope.clickedInitiative($scope.nodes[$location.search().node]);
+      }
+
     });
 
   });
