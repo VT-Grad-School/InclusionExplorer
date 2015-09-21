@@ -67,14 +67,29 @@ angular.module('inclusionApp')
     $scope.links = {};
     // $scope.nodes = {};
 
-    $scope.types = {
-      'Program': 0,
-      'College or VP': 1,
-      'Inclusive Excellence area': 2,
-      'constituent group': 3,
+    $scope.sourceCategoryNames = ['Inclusive Excellence area', 'constituent group', 'College or VP'];
+
+    $scope.types = {};
+    $scope.types[$scope.sourceCategoryNames[0]] = 3;
+    $scope.types[$scope.sourceCategoryNames[1]] = 1;
+    $scope.types[$scope.sourceCategoryNames[2]] = 2;
+    $scope.Program = 0;
+
+    $scope.tabOpen = {};
+    $scope.resetTabOpen = function (selectedNode) {
+      Object.keys($scope.types).forEach(function (property) {
+        $scope.tabOpen[property] = true;
+        if (selectedNode && (!selectedNode[property] || selectedNode[property].length === 0)) {
+          $scope.tabOpen[property] = false;
+        }
+      });
+      $scope.tabOpen.Program = true;
+
     };
 
-    $scope.sourceCategoryNames = ['College or VP', 'Inclusive Excellence area', 'constituent group'];
+    $scope.resetTabOpen();
+    
+
     $scope.sourceCategoryNames.forEach(function (name) {
       $scope.sourceCategories[name] = {};
       $scope.links[name] = {};
@@ -83,6 +98,14 @@ angular.module('inclusionApp')
     $scope.graph = {
       nodes: [],
       links: [],
+    };
+
+    $scope.typeAsClassName = function (val) {
+      if (val) {
+        return val.replace(/\s/g, '');
+      } else {
+        return '';
+      }
     };
 
     $scope.splitTrimAndAccumulateUniqueValues = function (property, initiative) { //property: area or const group or sponsor
@@ -202,10 +225,20 @@ angular.module('inclusionApp')
           evt.stopPropagation();
         }
 
+        $scope.resetTabOpen(selected);
+
         $scope.selectedNode = selected;
+
+        window.selectedNode = $scope.selectedNode;
         d3.selectAll('.clicked-node').classed('clicked-node', false);
-        d3.select('#node-'+$scope.selectedNode.id).classed('clicked-node', true);
         d3.selectAll('.connected-link-clicked').classed('connected-link-clicked', false);
+
+        $scope.clickNeighbors = $scope.nodeNeighborIndices(selected);
+        $scope.clickNeighbors.forEach(function (nodeId) {
+          d3.select('#node-'+nodeId).classed('clicked-node', true);
+        });
+
+        d3.select('#node-'+$scope.selectedNode.id).classed('clicked-node', true);
         d3.selectAll('.link.n' + $scope.selectedNode.id).classed('connected-link-clicked', true);
       };
 
@@ -217,10 +250,46 @@ angular.module('inclusionApp')
         });
       });
 
+      $scope.nodeNeighborIndices = function (node) {
+        var results = [];
+        if (node.type === 'Program') {
+          results = $scope.sourceCategoryNames.map(function (ctgyName) {
+            return node[ctgyName].map(function (ctgyValueName) {
+              if ($scope.sourceCategories.hasOwnProperty(ctgyName) && 
+                $scope.sourceCategories[ctgyName].hasOwnProperty(ctgyValueName) && 
+                $scope.sourceCategories[ctgyName][ctgyValueName].hasOwnProperty('nodeIdx')) {
+                  return $scope.sourceCategories[ctgyName][ctgyValueName].nodeIdx;
+              }
+            });
+          })
+            .reduce(function (prev, curr) {
+              return prev.concat(curr);
+            });
+        } else {
+          results = $scope.sourceCategories[node.type][node.name].initiatives.map(function (init) {
+            return init.id;
+          });
+        }
+        return results;
+      };
+
       $scope.onNodeMouseEnter = function (clicked, evt) {
         $scope.hoverNode = clicked;
+
+        // maybe we want to style the connected nodes as well
+        // for everything other than programs/initiatives, there would only be initiatives as connected nodes, 
+        //    while the initiatives could be connected to all other types
+
+        $scope.hoverNeighbors = [];
         d3.selectAll('.hover-node').classed('hover-node', false);
+
+        $scope.hoverNeighbors = $scope.nodeNeighborIndices(clicked);
+
         d3.select('#node-'+clicked.id).classed('hover-node', true);
+        $scope.hoverNeighbors.forEach(function (neighborNodeId) {
+          d3.select('#node-'+neighborNodeId).classed('hover-node', true);
+        });
+
         toolTip.transition()
           .duration(200)
           .style('opacity', '.9');

@@ -11,44 +11,29 @@
     
   </div>
   <div class="col-md-4">
-    <h3>{{selectedNode.type}}:</h3>
-    <h2>{{selectedNode.name}}</h2>
-    <div>
-      <div ng-if="selectedNode.hasOwnProperty('Inclusive Excellence area') && selectedNode['Inclusive Excellence area'].length > 0">
-        <h3>Inclusive Excellence areas</h3>
+    <h2>{{selectedNode.name}}<span class="label" ng-class="'label-' + typeAsClassName(selectedNode.type)">{{selectedNode.type}}</span></h2>
+    <div ng-if="selectedNode.hasOwnProperty('Description')">
+      <p>{{selectedNode.Description}}</p>
+    </div>
+    <accordion close-others="false">
+      <accordion-group is-open="tabOpen[ctgyName]" ng-repeat="ctgyName in sourceCategoryNames" ng-if="selectedNode.hasOwnProperty(ctgyName)">
+        <accordion-heading><i class="accordion-chevron fa" ng-class="{'fa-chevron-down':tabOpen[ctgyName], 'fa-chevron-right':!tabOpen[ctgyName]}"></i>{{ctgyName}} <span class="badge">{{selectedNode[ctgyName].length}}</span></accordion-heading>
         <ul>
-          <li ng-repeat="item in selectedNode['Inclusive Excellence area']">
-            <a ng-href="#/?node={{sourceCategories['Inclusive Excellence area'][item].nodeIdx}}" ng-mouseenter="onNodeMouseEnter(graph.nodes[sourceCategories['Inclusive Excellence area'][item].nodeIdx], $event)" ng-mouseleave="onNodeMouseLeave()" ng-click="clickedInitiative(nodes[sourceCategories['Inclusive Excellence area'][item].nodeIdx], $event)">{{item}}</a>
+          <li ng-repeat="item in selectedNode[ctgyName]">
+            <a ng-href="#/?node={{sourceCategories[ctgyName][item].nodeIdx}}" ng-mouseenter="onNodeMouseEnter(graph.nodes[sourceCategories[ctgyName][item].nodeIdx], $event)" ng-mouseleave="onNodeMouseLeave()" ng-click="clickedInitiative(nodes[sourceCategories[ctgyName][item].nodeIdx], $event)">{{item}}</a>
           </li>
         </ul>
-      </div>
-      <div ng-if="selectedNode.hasOwnProperty('constituent group') && selectedNode['constituent group'].length > 0">
-        <h3>Constituent Groups</h3>
-        <ul>
-          <li ng-repeat="item in selectedNode['constituent group']">
-            <a ng-href="#/?node={{sourceCategories['constituent group'][item].nodeIdx}}" ng-mouseenter="onNodeMouseEnter(graph.nodes[sourceCategories['constituent group'][item].nodeIdx], $event)" ng-mouseleave="onNodeMouseLeave()" ng-click="clickedInitiative(nodes[sourceCategories['constituent group'][item].nodeIdx], $event)">{{item}}</a>
-          </li>
-        </ul>
-      </div>
-      <div ng-if="selectedNode.hasOwnProperty('College or VP') && selectedNode['College or VP'].length > 0">
-        <h3>College or VPs</h3>
-        <ul>
-          <li ng-repeat="item in selectedNode['College or VP']">
-            <a ng-href="#/?node={{sourceCategories['College or VP'][item].nodeIdx}}" ng-mouseenter="onNodeMouseEnter(graph.nodes[sourceCategories['College or VP'][item].nodeIdx], $event)" ng-mouseleave="onNodeMouseLeave()" ng-click="clickedInitiative(nodes[sourceCategories['College or VP'][item].nodeIdx], $event)">{{item}}</a>
-          </li>
-        </ul>
-      </div>
-      <div ng-if="selectedNode.hasOwnProperty('Description')">
-        <p>{{selectedNode.Description}}</p>
-      </div>
-      <div ng-if="selectedNode.hasOwnProperty('type') && selectedNode.type!=='Program' && sourceCategories.hasOwnProperty(selectedNode.type)">
-        <h3>Inclusion Initiatives</h3>
+      </accordion-group>
+      <accordion-group is-open="tabOpen['Program']" ng-if="sourceCategories.hasOwnProperty(selectedNode.type) && sourceCategories[selectedNode.type].hasOwnProperty(selectedNode.name) && sourceCategories[selectedNode.type][selectedNode.name].hasOwnProperty('initiatives')">
+        <accordion-heading>
+          <i class="accordion-chevron fa" ng-class="{'fa-chevron-down':tabOpen['Program'], 'fa-chevron-right':!tabOpen['Program']}"></i>Inclusion Initiatives <span class="badge">{{sourceCategories[selectedNode.type][selectedNode.name].initiatives.length}}</span>
+        </accordion-heading>
         <ul>
           <li ng-repeat="initiative in sourceCategories[selectedNode.type][selectedNode.name].initiatives">
             <a ng-href="#/?node={{initiative.nodeIdx}}" ng-mouseenter="onNodeMouseEnter(graph.nodes[initiative.nodeIdx], $event)" ng-mouseleave="onNodeMouseLeave()" ng-click="clickedInitiative(nodes[initiative.nodeIdx], $event)">{{initiative.name}}</a>
           </li>
         </ul>
-      </div>
-    </div>
+      </accordion-group>
+    </accordion>
   </div>
 </div>

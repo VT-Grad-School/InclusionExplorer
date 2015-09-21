@@ -114,3 +114,29 @@ path.connected-link-clicked {
 .node:hover {
   cursor: pointer;
 }
+
+.nav, .pagination, .carousel, .panel-title a { cursor: pointer; }
+
+.label-Program {
+  font-size: 12px;
+  background-color: #1f77b4;
+}
+
+.label-CollegeorVP {
+  font-size: 12px;
+  background-color: #2ca02c;
+}
+
+.label-InclusiveExcellencearea {
+  font-size: 12px;
+  background-color: #d62728;
+}
+
+.label-constituentgroup {
+  font-size: 12px;
+  background-color: #ff7f0e;
+}
+
+.accordion-chevron {
+  margin-right: 10px;
+}
