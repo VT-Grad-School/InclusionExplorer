@@ -137,6 +137,30 @@ path.connected-link-clicked {
   background-color: #ff7f0e;
 }
 
+.panel-default > .panel-heading .badge-Program {
+  background-color: #1f77b4 ! important;
+}
+
+.panel-default > .panel-heading .badge-CollegeorVP {
+  background-color: #2ca02c ! important;
+}
+
+.panel-default > .panel-heading .badge-InclusiveExcellencearea {
+  background-color: #d62728 ! important;
+}
+
+.panel-default > .panel-heading .badge-constituentgroup {
+  background-color: #ff7f0e ! important;
+}
+
 .accordion-chevron {
   margin-right: 10px;
+}
+
+.inclusion .navbar input {
+  width: 300px;
+}
+
+.node.search-non-result {
+  fill: #eeeeee;
 }

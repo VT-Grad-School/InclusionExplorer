@@ -8,7 +8,7 @@
  * Controller of the inclusionApp
  */
 angular.module('inclusionApp')
-  .controller('MainCtrl', function($scope, $http, $location) {
+  .controller('MainCtrl', function($scope, $http, $location, $rootScope) {
     // this.awesomeThings = [
     //   'HTML5 Boilerplate',
     //   'AngularJS',
@@ -17,6 +17,9 @@ angular.module('inclusionApp')
     $scope.header1 = '';
     $scope.head = '';
     $scope.header2 = '';
+    $scope.selectedNode = {};
+    // window.selectedNode = $scope.selectedNode;
+    // console.log(window.selectedNode === new Object());
 
     var toolTip = d3.select(document.getElementById('toolTip'));
     var width = 800,
@@ -65,9 +68,13 @@ angular.module('inclusionApp')
 
     $scope.sourceCategories = {};
     $scope.links = {};
+    $scope.objLen = function (obj) {
+      return Object.keys(obj).length;
+    };
     // $scope.nodes = {};
 
     $scope.sourceCategoryNames = ['Inclusive Excellence area', 'constituent group', 'College or VP'];
+    window.ctgyNames = $scope.sourceCategoryNames;
 
     $scope.types = {};
     $scope.types[$scope.sourceCategoryNames[0]] = 3;
@@ -86,8 +93,20 @@ angular.module('inclusionApp')
       $scope.tabOpen.Program = true;
 
     };
-
     $scope.resetTabOpen();
+
+    $scope.homeTabOpen = {};
+    $scope.resetHomeTabOpen = function (selectedNode) {
+      Object.keys($scope.types).forEach(function (property) {
+        $scope.homeTabOpen[property] = true;
+        if (selectedNode && (!selectedNode[property] || selectedNode[property].length === 0)) {
+          $scope.homeTabOpen[property] = false;
+        }
+      });
+      $scope.homeTabOpen.Program = true;
+
+    };
+    $scope.resetHomeTabOpen();
     
 
     $scope.sourceCategoryNames.forEach(function (name) {
@@ -135,6 +154,7 @@ angular.module('inclusionApp')
 
     d3.csv('College-VP_Program_List.csv', function (initiatives) {
       $scope.initiatives = initiatives;
+      window.initiatives = $scope.initiatives;
       // console.log($scope.initiatives);
       $scope.initiatives.forEach(function (initiative) {
         initiative.nodeIdx = $scope.graph.nodes.length;
@@ -220,6 +240,10 @@ angular.module('inclusionApp')
           return d.name;
         });
 
+      $scope.haveSelectedNode = function () {
+        return Object.keys($scope.selectedNode).length > 0;
+      };
+
       $scope.setSelectedNode = function (selected, evt) {
         if (evt) {
           evt.stopPropagation();
@@ -252,24 +276,26 @@ angular.module('inclusionApp')
 
       $scope.nodeNeighborIndices = function (node) {
         var results = [];
-        if (node.type === 'Program') {
-          results = $scope.sourceCategoryNames.map(function (ctgyName) {
-            return node[ctgyName].map(function (ctgyValueName) {
-              if ($scope.sourceCategories.hasOwnProperty(ctgyName) && 
-                $scope.sourceCategories[ctgyName].hasOwnProperty(ctgyValueName) && 
-                $scope.sourceCategories[ctgyName][ctgyValueName].hasOwnProperty('nodeIdx')) {
-                  return $scope.sourceCategories[ctgyName][ctgyValueName].nodeIdx;
-              }
+        // if (typeof node !== 'undefined') {
+          if (node.type === 'Program') {
+            results = $scope.sourceCategoryNames.map(function (ctgyName) {
+              return node[ctgyName].map(function (ctgyValueName) {
+                if ($scope.sourceCategories.hasOwnProperty(ctgyName) && 
+                  $scope.sourceCategories[ctgyName].hasOwnProperty(ctgyValueName) && 
+                  $scope.sourceCategories[ctgyName][ctgyValueName].hasOwnProperty('nodeIdx')) {
+                    return $scope.sourceCategories[ctgyName][ctgyValueName].nodeIdx;
+                }
+              });
+            })
+              .reduce(function (prev, curr) {
+                return prev.concat(curr);
+              });
+          } else {
+            results = $scope.sourceCategories[node.type][node.name].initiatives.map(function (init) {
+              return init.id;
             });
-          })
-            .reduce(function (prev, curr) {
-              return prev.concat(curr);
-            });
-        } else {
-          results = $scope.sourceCategories[node.type][node.name].initiatives.map(function (init) {
-            return init.id;
-          });
-        }
+          }
+        // }
         return results;
       };
 
@@ -346,5 +372,57 @@ angular.module('inclusionApp')
       }
 
     });
+
+    $rootScope.$on('searchNodes', function (evt, queryObj) {
+      return $scope.searchNodes(queryObj.query);
+    });
+
+    $scope.searchNodes = function (query) { // change all of these to map so they return an array instead of t/f
+      d3.selectAll('.search-result, .search-non-result').classed('search-result search-non-result', false);
+      var results = $scope.initiatives.filter(function (initiative) {
+        var result = Object.keys(initiative).some(function (property) {
+          // debugger;
+          // console.log(initiative[property]);
+          if (initiative[property] instanceof Array) {
+            var result = initiative[property].some(function (item) {
+              var result = item.toUpperCase().indexOf(query.toUpperCase()) > -1;
+              // console.log('innermost result', result);
+              return result;
+            }); 
+            // console.log('if result', result);
+            return result;
+          } else {
+            if (initiative[property] && typeof initiative[property].toUpperCase == 'function') {
+              var result = initiative[property].toUpperCase().indexOf(query.toUpperCase()) > -1;
+              // console.log('else result', result);
+              return result;
+            } else {
+              // console.log('nonarray false');
+              return false;
+            }
+          }
+        });
+        // console.log('outermost result', result);
+
+        console.log(result);
+        if (result) {
+          // console.log(d3.select('#node-'+initiative.nodeIdx));
+          d3.select('#node-'+initiative.nodeIdx).classed('search-result', true);
+        } else {
+          // console.log(d3.select('#node-'+initiative.nodeIdx));
+          d3.select('#node-'+initiative.nodeIdx).classed('search-non-result', true);
+        }
+        return result;
+      });
+      // console.log(results);
+
+
+
+      $rootScope.$emit('nodeSearchResults', {
+        query: query,
+        results: results,
+      });
+      // return results;
+    };
 
   });
