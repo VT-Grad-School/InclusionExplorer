@@ -11,22 +11,22 @@ angular.module('inclusionApp')
         //   });
         // });
 
-        $scope.location = $location;
+        // $scope.location = $location;
 
-        $scope.searchNodes = function (query) {
-          $scope.query = query;
-          // console.log('searchNode', query.length);
-          $scope.deferred = $q.defer();
-          $rootScope.$emit('searchNodes', {
-            query: query,
-          });
-          return $scope.deferred.promise;
-        };
+        // $scope.searchNodes = function (query) {
+        //   $scope.query = query;
+        //   // console.log('searchNode', query.length);
+        //   $scope.deferred = $q.defer();
+        //   $rootScope.$emit('searchNodes', {
+        //     query: query,
+        //   });
+        //   return $scope.deferred.promise;
+        // };
 
-        $rootScope.$on('nodeSearchResults', function (evt, results) {
-          // console.log(results);
-          $scope.deferred.resolve(Object.keys(results.results));
-        });
+        // $rootScope.$on('nodeSearchResults', function (evt, results) {
+        //   // console.log(results);
+        //   $scope.deferred.resolve(Object.keys(results.results));
+        // });
       },
     };
   }]);

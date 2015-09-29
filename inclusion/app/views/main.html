@@ -8,11 +8,38 @@
     <div class="tooltipTail"></div>
   </div>
   <div id="initiatives-vis" class="col-md-8">
-    
+    <ul class="legend">
+      <li ng-repeat="ctNm in legend" 
+        class="legend-item" 
+        ng-class="'legend-item-' + typeAsClassName(ctNm)" 
+        ng-mouseenter="hoverType(ctNm)"
+        ng-mouseleave="unHoverType(ctNm)">
+         <i class="fa fa-stop"></i>
+         {{ctNm}}
+      </li>
+    </ul>
   </div>
   <div class="col-md-4 sidebar">
 
+    <p>{{queryObj.query}}</p>
     <div ng-if="!haveSelectedNode()">
+      <form class="" role="search">
+        <div class="form-group">
+          <input type="text" 
+            class="form-control" 
+            ng-model="queryObj.query" 
+            typeahead="result for result in searchAllNodes($viewValue)" 
+            typeahead-loading="searchingNodes" 
+            typeahead-no-results="noNodesFound" 
+            typeahead-min-length="0" 
+            typeahead-wait-ms="100" 
+            placeholder="Search Inclusion at VT">
+          <i ng-show="searchingNodes" class="fa fa-refresh"></i>
+          <div ng-show="noNodesFound && query.length > 0">
+            <i class="fa fa-times"></i> No Results Found
+          </div>
+        </div>
+      </form>
       <accordion close-others="false">
         <accordion-group ng-repeat="ctgyName in sourceCategoryNames" is-open="homeTabOpen[ctgyName]">
           <accordion-heading>

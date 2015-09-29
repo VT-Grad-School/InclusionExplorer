@@ -105,6 +105,7 @@ path.connected-link-clicked {
 
 .node.hover-node {
   stroke: #ff6600;
+  r: 15;
 }
 
 .node.clicked-node {

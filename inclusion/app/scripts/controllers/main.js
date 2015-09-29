@@ -8,7 +8,7 @@
  * Controller of the inclusionApp
  */
 angular.module('inclusionApp')
-  .controller('MainCtrl', function($scope, $http, $location, $rootScope) {
+  .controller('MainCtrl', function($scope, $http, $location, $rootScope, $q) {
     // this.awesomeThings = [
     //   'HTML5 Boilerplate',
     //   'AngularJS',
@@ -19,6 +19,10 @@ angular.module('inclusionApp')
     $scope.header2 = '';
     $scope.selectedNode = {};
 
+    $scope.queryObj = {
+      query: ''
+    };
+
     $scope.typeAsClassName = function (val) {
       if (val) {
         return val.replace(/\s/g, '');
@@ -26,6 +30,8 @@ angular.module('inclusionApp')
         return '';
       }
     };
+
+    $scope.legend = [];
     // window.selectedNode = $scope.selectedNode;
     // console.log(window.selectedNode === new Object());
 
@@ -53,8 +59,8 @@ angular.module('inclusionApp')
         console.log('clicked svg');
         $scope.$apply(function () {
           $location.search('node', null);
+          $scope.unSetSelectedNode();
         });
-        $scope.unSetSelectedNode();
       });
 
     // var legend = d3.select('#initiatives-vis').insert('div', ':first-child')
@@ -89,12 +95,18 @@ angular.module('inclusionApp')
     $scope.sourceCategoryNames = ['Inclusive Excellence area', 'constituent group', 'College or VP'];
     window.ctgyNames = $scope.sourceCategoryNames;
 
-    var legend = '';//'<li class="legend-item legend-item-Program"><i class="fa fa-stop"></i>Programs and Initiatives</li>';
+    // var legend = '';//'<li class="legend-item legend-item-Program"><i class="fa fa-stop"></i>Programs and Initiatives</li>';
     $scope.sourceCategoryNames.forEach(function (ctNm) {
-      legend = legend + '<li class="legend-item legend-item-' + $scope.typeAsClassName(ctNm) + '"><i class="fa fa-stop"></i>' + ctNm + '</li>';
+      $scope.legend.push(ctNm);
+      // legend = legend + '<li class="legend-item legend-item-' + $scope.typeAsClassName(ctNm) + '"><i class="fa fa-stop"></i>' + ctNm + '</li>';
     });
-    legend = legend + '<li class="legend-item legend-item-Program"><i class="fa fa-stop"></i>Programs and Initiatives</li>';
-    angular.element('#initiatives-vis').append('<ul class="legend">' + legend + '</ul>');
+    $scope.legend.push('Program');
+    // legend = legend + '<li class="legend-item legend-item-Program"><i class="fa fa-stop"></i>Programs and Initiatives</li>';
+
+    // ng-mouseenter="onNodeMouseEnter(graph.nodes[item.nodeIdx], $event)" ng-mouseleave="onNodeMouseLeave()"
+    
+    // angular.element('#initiatives-vis').append('<ul class="legend">' + legend + '</ul>');
+
 
     $scope.types = {};
     $scope.types[$scope.sourceCategoryNames[0]] = 3;
@@ -238,7 +250,9 @@ angular.module('inclusionApp')
         var node = svg.selectAll('.node')
           .data(graph.nodes)
           .enter().append('circle')
-          .attr('class', 'node')
+          .attr('class', function (d) {
+            return 'node '+$scope.typeAsClassName(d.type);
+          })
           .attr('r', 10)
           .attr('id', function (d) {
             return 'node-'+d.nodeIdx;
@@ -262,6 +276,10 @@ angular.module('inclusionApp')
           if (evt) {
             evt.stopPropagation();
           }
+
+          $scope.queryObj = {
+            query: ''
+          };
 
           $scope.resetTabOpen(selected);
 
@@ -418,6 +436,7 @@ angular.module('inclusionApp')
     });
 
     $scope.searchNodes = function (query) { // change all of these to map so they return an array instead of t/f
+      console.log('query');
       var queryRegex = new RegExp('\\w*'+query+'\\w*', 'gi');
       d3.selectAll('.node').classed('search-result search-non-result', false)
         .attr('class', 'node');
@@ -554,5 +573,33 @@ angular.module('inclusionApp')
         results: allMatches,
       });
     };
+
+    $scope.hoverType = function (typeName) {
+      console.log('hoverType', $scope.typeAsClassName(typeName));
+      d3.selectAll('.'+$scope.typeAsClassName(typeName))
+        .classed('hover-node', true);
+    };
+
+    $scope.unHoverType = function (typeName) {
+      console.log('unHoverType', $scope.typeAsClassName(typeName));
+      // d3.selectAll('.'+typeName)
+      d3.selectAll('.hover-node')
+        .classed('hover-node', false);
+    };
+
+    $scope.searchAllNodes = function (query) {
+      $scope.query = query;
+      // console.log('searchNode', query.length);
+      $scope.deferred = $q.defer();
+      $rootScope.$emit('searchNodes', {
+        query: query,
+      });
+      return $scope.deferred.promise;
+    };
+
+    $rootScope.$on('nodeSearchResults', function (evt, results) {
+      // console.log(results);
+      $scope.deferred.resolve(Object.keys(results.results));
+    });
 
   });
