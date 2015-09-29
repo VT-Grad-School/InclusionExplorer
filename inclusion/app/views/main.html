@@ -10,28 +10,31 @@
   <div id="initiatives-vis" class="col-md-8">
     
   </div>
-  <div class="col-md-4">
+  <div class="col-md-4 sidebar">
 
     <div ng-if="!haveSelectedNode()">
       <accordion close-others="false">
         <accordion-group ng-repeat="ctgyName in sourceCategoryNames" is-open="homeTabOpen[ctgyName]">
           <accordion-heading>
-            <i class="accordion-chevron fa" ng-class="{'fa-chevron-down':homeTabOpen[ctgyName], 'fa-chevron-right':!homeTabOpen[ctgyName]}"></i>
-            {{ctgyName}} <span class="badge" ng-class="'badge-' + typeAsClassName(ctgyName)">{{ objLen(sourceCategories[ctgyName]) }}</span>
+            <i class="accordion-chevron fa" ng-class="{'fa-chevron-down':homeTabOpen[ctgyName], 'fa-chevron-right':!homeTabOpen[ctgyName] || visibleEntities(ctgyName) === 0}"></i>
+            {{ctgyName}} <span class="badge" ng-class="'badge-' + typeAsClassName(ctgyName)">{{ visibleEntities(ctgyName) }}</span>
+            <span class="hidden-items-count" ng-if="objLen(sourceCategories[ctgyName]) - visibleEntities(ctgyName) > 0"><span class="badge">{{objLen(sourceCategories[ctgyName]) - visibleEntities(ctgyName)}} hidden by query</span>
           </accordion-heading>
           <ul>
-            <li ng-repeat="(itemName, item) in sourceCategories[ctgyName]">
-              <a ng-href="#/?node={{item.nodeIdx}}" ng-mouseenter="onNodeMouseEnter(graph.nodes[item.nodeIdx], $event)" ng-mouseleave="onNodeMouseLeave()" ng-click="clickedInitiative(nodes[item.nodeIdx], $event)">{{itemName}}</a>
+            <li ng-repeat="item in sourceCategories[ctgyName] | toArray | orderBy: 'name'" ng-class="{'list-item-non-result': item.nonResult}">
+              <a ng-href="#/?node={{item.nodeIdx}}" ng-mouseenter="onNodeMouseEnter(graph.nodes[item.nodeIdx], $event)" ng-mouseleave="onNodeMouseLeave()" ng-click="clickedInitiative(nodes[item.nodeIdx], $event)">{{item.name}}</a>
             </li>
           </ul>
         </accordion-group>
         <accordion-group is-open="homeTabOpen['Program']">
           <accordion-heading>
-            <i class="accordion-chevron fa" ng-class="{'fa-chevron-down':homeTabOpen['Program'], 'fa-chevron-right':!homeTabOpen['Program']}"></i>Inclusion Initiatives <span class="badge">{{sourceCategories[selectedNode.type][selectedNode.name].initiatives.length}}</span>
+            <i class="accordion-chevron fa" ng-class="{'fa-chevron-down':homeTabOpen['Program'], 'fa-chevron-right':!homeTabOpen['Program']}"></i>Inclusion Initiatives <span class="badge badge-Program">{{visibleInitiatives()}}</span>
+            <span class="hidden-items-count" ng-if="initiatives.length - visibleInitiatives() > 0"><span class="badge">{{initiatives.length - visibleInitiatives()}} hidden by query</span>
+            </span>
           </accordion-heading> 
           <ul>
-            <li ng-repeat="initiative in initiatives">
-              <a ng-href="#/?node={{initiative.nodeIdx}}" ng-mouseenter="onNodeMouseEnter(initiative.nodeIdx, $event)" ng-mouseleave="onNodeMouseLeave()" ng-click="clickedInitiative(initiative.nodeIdx, $event)">{{initiative.name}}</a>
+            <li ng-repeat="initiative in initiatives | orderBy:'name'" ng-if="!initiative.nonResult">
+              <a ng-href="#/?node={{initiative.nodeIdx}}" ng-mouseenter="onNodeMouseEnter(graph.nodes[initiative.nodeIdx], $event)" ng-mouseleave="onNodeMouseLeave()" ng-click="clickedInitiative(graph.nodes[initiative.nodeIdx], $event)">{{initiative.name}}</a>
             </li>
           </ul>         
         </accordion-group>

@@ -18,6 +18,14 @@ angular.module('inclusionApp')
     $scope.head = '';
     $scope.header2 = '';
     $scope.selectedNode = {};
+
+    $scope.typeAsClassName = function (val) {
+      if (val) {
+        return val.replace(/\s/g, '');
+      } else {
+        return '';
+      }
+    };
     // window.selectedNode = $scope.selectedNode;
     // console.log(window.selectedNode === new Object());
 
@@ -49,6 +57,11 @@ angular.module('inclusionApp')
         $scope.unSetSelectedNode();
       });
 
+    // var legend = d3.select('#initiatives-vis').insert('div', ':first-child')
+    //   .
+
+    
+
     function splitAndTrim (sourceStr) {
       if (sourceStr) {
         return sourceStr.split(';').map(function (item) {
@@ -76,6 +89,13 @@ angular.module('inclusionApp')
     $scope.sourceCategoryNames = ['Inclusive Excellence area', 'constituent group', 'College or VP'];
     window.ctgyNames = $scope.sourceCategoryNames;
 
+    var legend = '';//'<li class="legend-item legend-item-Program"><i class="fa fa-stop"></i>Programs and Initiatives</li>';
+    $scope.sourceCategoryNames.forEach(function (ctNm) {
+      legend = legend + '<li class="legend-item legend-item-' + $scope.typeAsClassName(ctNm) + '"><i class="fa fa-stop"></i>' + ctNm + '</li>';
+    });
+    legend = legend + '<li class="legend-item legend-item-Program"><i class="fa fa-stop"></i>Programs and Initiatives</li>';
+    angular.element('#initiatives-vis').append('<ul class="legend">' + legend + '</ul>');
+
     $scope.types = {};
     $scope.types[$scope.sourceCategoryNames[0]] = 3;
     $scope.types[$scope.sourceCategoryNames[1]] = 1;
@@ -85,12 +105,12 @@ angular.module('inclusionApp')
     $scope.tabOpen = {};
     $scope.resetTabOpen = function (selectedNode) {
       Object.keys($scope.types).forEach(function (property) {
-        $scope.tabOpen[property] = true;
+        $scope.tabOpen[property] = false;
         if (selectedNode && (!selectedNode[property] || selectedNode[property].length === 0)) {
           $scope.tabOpen[property] = false;
         }
       });
-      $scope.tabOpen.Program = true;
+      $scope.tabOpen.Program = false;
 
     };
     $scope.resetTabOpen();
@@ -98,12 +118,12 @@ angular.module('inclusionApp')
     $scope.homeTabOpen = {};
     $scope.resetHomeTabOpen = function (selectedNode) {
       Object.keys($scope.types).forEach(function (property) {
-        $scope.homeTabOpen[property] = true;
+        $scope.homeTabOpen[property] = false;
         if (selectedNode && (!selectedNode[property] || selectedNode[property].length === 0)) {
           $scope.homeTabOpen[property] = false;
         }
       });
-      $scope.homeTabOpen.Program = true;
+      $scope.homeTabOpen.Program = false;
 
     };
     $scope.resetHomeTabOpen();
@@ -119,14 +139,6 @@ angular.module('inclusionApp')
       links: [],
     };
 
-    $scope.typeAsClassName = function (val) {
-      if (val) {
-        return val.replace(/\s/g, '');
-      } else {
-        return '';
-      }
-    };
-
     $scope.splitTrimAndAccumulateUniqueValues = function (property, initiative) { //property: area or const group or sponsor
       var results = splitAndTrim(initiative[property]);
       results.forEach(function (value) { // e.g. a list of areas 
@@ -140,7 +152,7 @@ angular.module('inclusionApp')
             type: property,
             nodeIdx: idx,
           });
-          $scope.sourceCategories[property][value] = {nodeIdx: idx, initiatives:[initiative]};
+          $scope.sourceCategories[property][value] = {nodeIdx: idx, initiatives:[initiative], name: value, nonResult: false};
         }
         $scope.graph.links.push([$scope.sourceCategories[property][value].nodeIdx, initiative.nodeIdx]);
       });
@@ -153,224 +165,252 @@ angular.module('inclusionApp')
     $scope.hoverNode = {};
 
     d3.csv('College-VP_Program_List.csv', function (initiatives) {
-      $scope.initiatives = initiatives;
-      window.initiatives = $scope.initiatives;
-      // console.log($scope.initiatives);
-      $scope.initiatives.forEach(function (initiative) {
-        initiative.nodeIdx = $scope.graph.nodes.length;
-        $scope.graph.nodes.push(initiative);
-        initiative['Inclusive Excellence area'] = $scope.splitTrimAndAccumulateUniqueValues('Inclusive Excellence area', initiative);
-        initiative['constituent group'] = $scope.splitTrimAndAccumulateUniqueValues('constituent group', initiative);
-        initiative['College or VP'] = $scope.splitTrimAndAccumulateUniqueValues('College or VP', initiative);
-        initiative.name = initiative['Program Name'];
-        initiative.type = 'Program';
-        $scope.richInitiativeData[initiative['Program Name']] = initiative;
-      });
-      window.graph = $scope.graph;
-      window.initiatives = $scope.initiatives;
-      $scope.sourceCategoryNames.forEach(function (name) { // name might be "areas"
-        Object.keys($scope.sourceCategories[name]).forEach(function (value) {
-          $scope.richInitiativeData[value] = {
-            name: value,
-            type: name,
-            nodeIdx: $scope.graph.nodes.length
-          };
+      $scope.$apply(function () {
+        $scope.initiatives = initiatives;
+        window.initiatives = $scope.initiatives;
+        // console.log($scope.initiatives);
+        $scope.initiatives.forEach(function (initiative) {
+          initiative.nodeIdx = $scope.graph.nodes.length;
+          $scope.graph.nodes.push(initiative);
+          initiative.nonResult = false;
+          initiative['Inclusive Excellence area'] = $scope.splitTrimAndAccumulateUniqueValues('Inclusive Excellence area', initiative);
+          initiative['constituent group'] = $scope.splitTrimAndAccumulateUniqueValues('constituent group', initiative);
+          initiative['College or VP'] = $scope.splitTrimAndAccumulateUniqueValues('College or VP', initiative);
+          initiative.name = initiative['Program Name'];
+          initiative.type = 'Program';
+          $scope.richInitiativeData[initiative['Program Name']] = initiative;
         });
-      });
-      window.richInitiativeData = $scope.richInitiativeData;
-      window.ctgs = $scope.sourceCategories;
-
-      // create links between these higher-level nodes and the associated program nodes
-
-      // console.log($scope.graph);
-      $scope.nodes = $scope.graph.nodes.slice();
-      var links = [],
-        bilinks = [];
-
-      $scope.graph.links.forEach(function(link) {
-        // console.log(nodes[link[0]]);
-        var s = $scope.nodes[link[0]],
-          t = $scope.nodes[link[1]],
-          i = {}; // intermediate node
-        s.id = link[0];
-        t.id = link[1];
-        $scope.nodes.push(i);
-        links.push({
-          source: s,
-          target: i
-        }, {
-          source: i,
-          target: t
+        window.graph = $scope.graph;
+        window.initiatives = $scope.initiatives;
+        $scope.sourceCategoryNames.forEach(function (name) { // name might be "areas"
+          Object.keys($scope.sourceCategories[name]).forEach(function (value) {
+            $scope.richInitiativeData[value] = {
+              name: value,
+              type: name,
+              nodeIdx: $scope.graph.nodes.length
+            };
+          });
         });
-        bilinks.push([s, i, t]);
-      });
+        window.richInitiativeData = $scope.richInitiativeData;
+        window.ctgs = $scope.sourceCategories;
 
-      force
-        .nodes($scope.nodes)
-        .links(links)
-        .start();
+        // create links between these higher-level nodes and the associated program nodes
 
-      var link = svg.selectAll('.link')
-        .data(bilinks)
-        .enter().append('path')
-        .attr('class', function(currentLink) {
-          var classes = ['link'];
-          // console.log(currentLink);
-          classes.push('n' + currentLink[0].id);
-          classes.push('n' + currentLink[2].id);
-          return classes.join(' ');
+        // console.log($scope.graph);
+        $scope.nodes = $scope.graph.nodes.slice();
+        var links = [],
+          bilinks = [];
+
+        $scope.graph.links.forEach(function(link) {
+          // console.log(nodes[link[0]]);
+          var s = $scope.nodes[link[0]],
+            t = $scope.nodes[link[1]],
+            i = {}; // intermediate node
+          s.id = link[0];
+          t.id = link[1];
+          $scope.nodes.push(i);
+          links.push({
+            source: s,
+            target: i
+          }, {
+            source: i,
+            target: t
+          });
+          bilinks.push([s, i, t]);
         });
 
-      var node = svg.selectAll('.node')
-        .data(graph.nodes)
-        .enter().append('circle')
-        .attr('class', 'node')
-        .attr('r', 10)
-        .attr('id', function (d) {
-          return 'node-'+d.nodeIdx;
-        })
-        .style('fill', function(d) {
-          return color($scope.types[d.type]);
-        })
-        .call(force.drag);
+        force
+          .nodes($scope.nodes)
+          .links(links)
+          .start();
 
-      node.append('title')
-        .text(function(d) {
-          // console.log(d);
-          return d.name;
-        });
+        var link = svg.selectAll('.link')
+          .data(bilinks)
+          .enter().append('path')
+          .attr('class', function(currentLink) {
+            var classes = ['link'];
+            // console.log(currentLink);
+            classes.push('n' + currentLink[0].id);
+            classes.push('n' + currentLink[2].id);
+            return classes.join(' ');
+          });
 
-      $scope.haveSelectedNode = function () {
-        return Object.keys($scope.selectedNode).length > 0;
-      };
+        var node = svg.selectAll('.node')
+          .data(graph.nodes)
+          .enter().append('circle')
+          .attr('class', 'node')
+          .attr('r', 10)
+          .attr('id', function (d) {
+            return 'node-'+d.nodeIdx;
+          })
+          .style('fill', function(d) {
+            return color($scope.types[d.type]);
+          })
+          .call(force.drag);
 
-      $scope.setSelectedNode = function (selected, evt) {
-        if (evt) {
-          evt.stopPropagation();
-        }
+        node.append('title')
+          .text(function(d) {
+            // console.log(d);
+            return d.name;
+          });
 
-        $scope.resetTabOpen(selected);
+        $scope.haveSelectedNode = function () {
+          return Object.keys($scope.selectedNode).length > 0;
+        };
 
-        $scope.selectedNode = selected;
-
-        window.selectedNode = $scope.selectedNode;
-        d3.selectAll('.clicked-node').classed('clicked-node', false);
-        d3.selectAll('.connected-link-clicked').classed('connected-link-clicked', false);
-
-        $scope.clickNeighbors = $scope.nodeNeighborIndices(selected);
-        $scope.clickNeighbors.forEach(function (nodeId) {
-          d3.select('#node-'+nodeId).classed('clicked-node', true);
-        });
-
-        d3.select('#node-'+$scope.selectedNode.id).classed('clicked-node', true);
-        d3.selectAll('.link.n' + $scope.selectedNode.id).classed('connected-link-clicked', true);
-      };
-
-      node.on('click', function (clicked) {
-        console.log(clicked);
-        $location.search('node', clicked.id);
-        $scope.$apply(function () {
-          $scope.setSelectedNode(clicked, d3.event);
-        });
-      });
-
-      $scope.nodeNeighborIndices = function (node) {
-        var results = [];
-        // if (typeof node !== 'undefined') {
-          if (node.type === 'Program') {
-            results = $scope.sourceCategoryNames.map(function (ctgyName) {
-              return node[ctgyName].map(function (ctgyValueName) {
-                if ($scope.sourceCategories.hasOwnProperty(ctgyName) && 
-                  $scope.sourceCategories[ctgyName].hasOwnProperty(ctgyValueName) && 
-                  $scope.sourceCategories[ctgyName][ctgyValueName].hasOwnProperty('nodeIdx')) {
-                    return $scope.sourceCategories[ctgyName][ctgyValueName].nodeIdx;
-                }
-              });
-            })
-              .reduce(function (prev, curr) {
-                return prev.concat(curr);
-              });
-          } else {
-            results = $scope.sourceCategories[node.type][node.name].initiatives.map(function (init) {
-              return init.id;
-            });
+        $scope.setSelectedNode = function (selected, evt) {
+          if (evt) {
+            evt.stopPropagation();
           }
-        // }
-        return results;
-      };
 
-      $scope.onNodeMouseEnter = function (clicked, evt) {
-        $scope.hoverNode = clicked;
+          $scope.resetTabOpen(selected);
 
-        // maybe we want to style the connected nodes as well
-        // for everything other than programs/initiatives, there would only be initiatives as connected nodes, 
-        //    while the initiatives could be connected to all other types
+          $scope.selectedNode = selected;
 
-        $scope.hoverNeighbors = [];
-        d3.selectAll('.hover-node').classed('hover-node', false);
+          window.selectedNode = $scope.selectedNode;
+          d3.selectAll('.clicked-node').classed('clicked-node', false);
+          d3.selectAll('.connected-link-clicked').classed('connected-link-clicked', false);
 
-        $scope.hoverNeighbors = $scope.nodeNeighborIndices(clicked);
+          $scope.clickNeighbors = $scope.nodeNeighborIndices(selected);
+          $scope.clickNeighbors.forEach(function (nodeId) {
+            d3.select('#node-'+nodeId).classed('clicked-node', true);
+          });
 
-        d3.select('#node-'+clicked.id).classed('hover-node', true);
-        $scope.hoverNeighbors.forEach(function (neighborNodeId) {
-          d3.select('#node-'+neighborNodeId).classed('hover-node', true);
+          d3.select('#node-'+$scope.selectedNode.id).classed('clicked-node', true);
+          d3.selectAll('.link.n' + $scope.selectedNode.id).classed('connected-link-clicked', true);
+        };
+
+        node.on('click', function (clicked) {
+          console.log(clicked);
+          $location.search('node', clicked.id);
+          $scope.$apply(function () {
+            $scope.setSelectedNode(clicked, d3.event);
+          });
         });
 
-        toolTip.transition()
-          .duration(200)
-          .style('opacity', '.9');
+        $scope.visibleInitiatives = function () {
+          return $scope.initiatives.reduce(function (prev, curr, i) {
+            if ($scope.initiatives[i].nonResult) {
+              return prev;
+            } else {
+              return prev+1;
+            }
+          }, 0);
+        };
 
-        $scope.head = clicked.name;
-        $scope.header2 = clicked;
-        var event = d3.event;
-        if (event === null) {
-          event = {
-            pageX: clicked.x,
-            pageY: clicked.y,
-          };
+        $scope.visibleEntities = function (ctgyName) {
+          return Object.keys($scope.sourceCategories[ctgyName]).reduce(function (prev, curr, i, arr) {
+            // console.log($scope.sourceCategories[ctgyName][arr[i]]);
+            if ($scope.sourceCategories[ctgyName][arr[i]].nonResult) {
+              return prev;
+            } else {
+              return prev+1;
+            }
+          }, 0);
+        };
+
+        $scope.nodeNeighborIndices = function (node) {
+          var results = [];
+          // if (typeof node !== 'undefined') {
+            if (node.type === 'Program') {
+              results = $scope.sourceCategoryNames.map(function (ctgyName) {
+                return node[ctgyName].map(function (ctgyValueName) {
+                  if ($scope.sourceCategories.hasOwnProperty(ctgyName) && 
+                    $scope.sourceCategories[ctgyName].hasOwnProperty(ctgyValueName) && 
+                    $scope.sourceCategories[ctgyName][ctgyValueName].hasOwnProperty('nodeIdx')) {
+                      return $scope.sourceCategories[ctgyName][ctgyValueName].nodeIdx;
+                  }
+                });
+              })
+                .reduce(function (prev, curr) {
+                  return prev.concat(curr);
+                });
+            } else if ($scope.hasOwnProperty('sourceCategories') && 
+                node.hasOwnProperty('type') && 
+                node.hasOwnProperty('name') && 
+                $scope.sourceCategories.hasOwnProperty(node.type) &&
+                $scope.sourceCategories[node.type].hasOwnProperty(node.name) &&
+                $scope.sourceCategories[node.type][node.name].hasOwnProperty(initiatives)) {
+                  results = $scope.sourceCategories[node.type][node.name].initiatives.map(function (init) {
+                    return init.id;
+                  });
+            }
+          // }
+          return results;
+        };
+
+        $scope.onNodeMouseEnter = function (clicked, evt) {
+          $scope.hoverNode = clicked;
+
+          // maybe we want to style the connected nodes as well
+          // for everything other than programs/initiatives, there would only be initiatives as connected nodes, 
+          //    while the initiatives could be connected to all other types
+
+          $scope.hoverNeighbors = [];
+          d3.selectAll('.hover-node').classed('hover-node', false);
+
+          $scope.hoverNeighbors = $scope.nodeNeighborIndices(clicked);
+
+          d3.select('#node-'+clicked.id).classed('hover-node', true);
+          $scope.hoverNeighbors.forEach(function (neighborNodeId) {
+            d3.select('#node-'+neighborNodeId).classed('hover-node', true);
+          });
+
+          toolTip.transition()
+            .duration(200)
+            .style('opacity', '.9');
+
+          $scope.head = clicked.name;
+          $scope.header2 = clicked;
+          var event = d3.event;
+          if (event === null) {
+            event = {
+              pageX: clicked.x,
+              pageY: clicked.y,
+            };
+          }
+          toolTip.style('left', (event.pageX + 0) + 'px')
+            .style('top', (event.pageY - 0) + 'px')
+            .style('height', '100px');
+
+          d3.selectAll('.link.n' + clicked.id).classed('connected-link', true);
+        };
+
+        node.on('mouseover', function(clicked) {
+          $scope.$apply(function () {
+            $scope.onNodeMouseEnter(clicked);
+          });
+        });
+
+        $scope.onNodeMouseLeave = function () {
+          d3.selectAll('.hover-node').classed('hover-node', false);
+          toolTip.transition() // declare the transition properties to fade-out the div
+            .duration(500) // it shall take 500ms
+            .style('opacity', '0'); // and go all the way to an opacity of nil
+          d3.selectAll('.link.connected-link').classed('connected-link', false);
+        };
+
+        node.on('mouseout', function() {
+          $scope.onNodeMouseLeave();
+        });
+
+        force.on('tick', function() {
+          link.attr('d', function(d) {
+            return 'M' + d[0].x + ',' + d[0].y + 'S' + d[1].x + ',' + d[1].y + ' ' + d[2].x + ',' + d[2].y;
+          });
+          node.attr('transform', function(d) {
+            return 'translate(' + d.x + ',' + d.y + ')';
+          });
+        });
+
+        if ($location.search().hasOwnProperty('node')) {
+          console.log($location.search());
+          console.log($location.search().node);
+          console.log($scope.nodes[$location.search().node]);
+          $scope.clickedInitiative($scope.nodes[$location.search().node]);
         }
-        toolTip.style('left', (event.pageX + 15) + 'px')
-          .style('top', (event.pageY - 75) + 'px')
-          .style('height', '100px');
 
-        d3.selectAll('.link.n' + clicked.id).classed('connected-link', true);
-      };
-
-      node.on('mouseover', function(clicked) {
-        $scope.$apply(function () {
-          $scope.onNodeMouseEnter(clicked);
-        });
       });
-
-      $scope.onNodeMouseLeave = function () {
-        d3.selectAll('.hover-node').classed('hover-node', false);
-        toolTip.transition() // declare the transition properties to fade-out the div
-          .duration(500) // it shall take 500ms
-          .style('opacity', '0'); // and go all the way to an opacity of nil
-        d3.selectAll('.link.connected-link').classed('connected-link', false);
-      };
-
-      node.on('mouseout', function() {
-        $scope.onNodeMouseLeave();
-      });
-
-      force.on('tick', function() {
-        link.attr('d', function(d) {
-          return 'M' + d[0].x + ',' + d[0].y + 'S' + d[1].x + ',' + d[1].y + ' ' + d[2].x + ',' + d[2].y;
-        });
-        node.attr('transform', function(d) {
-          return 'translate(' + d.x + ',' + d.y + ')';
-        });
-      });
-
-      console.log('done setting up?');
-      if ($location.search().hasOwnProperty('node')) {
-        console.log($location.search());
-        console.log($location.search().node);
-        console.log($scope.nodes[$location.search().node]);
-        $scope.clickedInitiative($scope.nodes[$location.search().node]);
-      }
-
     });
 
     $rootScope.$on('searchNodes', function (evt, queryObj) {
@@ -378,51 +418,141 @@ angular.module('inclusionApp')
     });
 
     $scope.searchNodes = function (query) { // change all of these to map so they return an array instead of t/f
-      d3.selectAll('.search-result, .search-non-result').classed('search-result search-non-result', false);
-      var results = $scope.initiatives.filter(function (initiative) {
-        var result = Object.keys(initiative).some(function (property) {
-          // debugger;
-          // console.log(initiative[property]);
-          if (initiative[property] instanceof Array) {
-            var result = initiative[property].some(function (item) {
-              var result = item.toUpperCase().indexOf(query.toUpperCase()) > -1;
-              // console.log('innermost result', result);
-              return result;
-            }); 
-            // console.log('if result', result);
-            return result;
-          } else {
-            if (initiative[property] && typeof initiative[property].toUpperCase == 'function') {
-              var result = initiative[property].toUpperCase().indexOf(query.toUpperCase()) > -1;
-              // console.log('else result', result);
-              return result;
+      var queryRegex = new RegExp('\\w*'+query+'\\w*', 'gi');
+      d3.selectAll('.node').classed('search-result search-non-result', false)
+        .attr('class', 'node');
+
+      if (query.trim().length === 0) {
+        // console.log('empty');
+        $rootScope.$emit('nodeSearchResults', {
+          query: query,
+          results: {},
+        });
+      } else {
+        // console.log('query', query);
+      }
+      var allMatches = {};
+      $scope.initiatives.forEach(function (initiative) {
+        var initResults = {};
+        // var result = Object.keys(initiative).forEach(function (property) {
+        Object.keys(initiative).forEach(function (property) {
+          if (property === 'name' || 'Description') {
+            // debugger;
+            // console.log(initiative[property]);
+            // var matchesForProp = {};
+            if (initiative[property] instanceof Array) {
+              initiative[property].forEach(function (item) {
+                var matches = item.match(queryRegex);
+                if (matches) {
+                  matches.forEach(function (match) {
+                    if (!allMatches.hasOwnProperty(match)) {
+                      allMatches[match] = [];
+                    }
+                    allMatches[match].push({match: item, key: property, entity:initiative});
+
+                    if (!initResults.hasOwnProperty(match)) {
+                      initResults[match] = [];
+                    }
+                    initResults[match].push({match: item, key: property, entity:initiative});
+                  });
+                }
+                // var result = item.toUpperCase().indexOf(query.toUpperCase()) > -1;
+                // console.log('innermost result', result);
+                // return result;
+                // return matches;
+              }); 
+              // console.log('if result', result);
+              // return matchesForProp;
             } else {
-              // console.log('nonarray false');
-              return false;
+              if (initiative[property] && typeof initiative[property].toUpperCase === 'function') {
+                // var result = initiative[property].toUpperCase().indexOf(query.toUpperCase()) > -1;
+                // console.log('else result', result);
+                // return result;
+                var matches = initiative[property].match(queryRegex)
+                if (matches) {
+                  matches.forEach(function (match) {
+                    if (!allMatches.hasOwnProperty(match)) {
+                      allMatches[match] = [];
+                    }
+                    allMatches[match].push({match: initiative[property], key: property, entity:initiative});
+
+                    if (!initResults.hasOwnProperty(match)) {
+                      initResults[match] = [];
+                    }
+                    initResults[match].push({match: initiative[property], key: property, entity:initiative});
+                  });
+                }
+                // return matches;
+              } else {
+                // console.log('nonarray false');
+                // return [];
+              }
             }
+            // return matchesForProp;
           }
         });
         // console.log('outermost result', result);
-
-        console.log(result);
-        if (result) {
-          // console.log(d3.select('#node-'+initiative.nodeIdx));
-          d3.select('#node-'+initiative.nodeIdx).classed('search-result', true);
+        
+        // console.log('allMatches', allMatches);
+        // console.log(result);
+        if (Object.keys(initResults).length > 0) {
+          initiative.nonResult = false;
+          // console.log('if', d3.select('#node-'+initiative.nodeIdx));
+          d3.select('#node-'+initiative.nodeIdx)
+            .attr('class', 'node search-result')
+            .classed('search-result', true);
         } else {
-          // console.log(d3.select('#node-'+initiative.nodeIdx));
-          d3.select('#node-'+initiative.nodeIdx).classed('search-non-result', true);
+          initiative.nonResult = true;
+          // console.log(initiative);
+          d3.select('#node-'+initiative.nodeIdx)
+            .attr('class', 'node search-non-result')
+            .classed('search-non-result', true);
         }
-        return result;
+        // return result;
       });
-      // console.log(results);
 
+      Object.keys($scope.sourceCategories).forEach(function (ctgyName) {
+        Object.keys($scope.sourceCategories[ctgyName]).forEach(function (entityName) {
+          var matches = entityName.match(queryRegex);
+          if (matches && matches.length > 0) {
+            matches.forEach(function (match) {
+              if (!allMatches.hasOwnProperty(match)) {
+                allMatches[match] = [];
+              }
+              allMatches[match].push({
+                match: entityName, 
+                key: 'name', 
+                entity: $scope.sourceCategories[ctgyName][entityName]
+              });
+            });
+            $scope.sourceCategories[ctgyName][entityName].nonResult = false;
+            d3.select('#node-'+$scope.sourceCategories[ctgyName][entityName].nodeIdx)
+              .attr('class', 'node search-result')
+              .classed('search-result', true);
+          } else {
+            $scope.sourceCategories[ctgyName][entityName].nonResult = true;
+            d3.select('#node-'+$scope.sourceCategories[ctgyName][entityName].nodeIdx)
+              .attr('class', 'node search-non-result')
+              .classed('search-non-result', true);
+          }
+        });
+      });
 
+      // console.log(allMatches);
+
+      // d3.selectAll('.node:not(.search-result)').classed('search-non-result', true)
+      //   .attr('class', 'node search-non-result'); //this is why non program nodes gray out even thoguh they're not being searched.
+
+      // $rootScope.$emit('nodeSearchResults', {
+      //   query: query,
+      //   results: results,
+      // });
+      // return results;
 
       $rootScope.$emit('nodeSearchResults', {
         query: query,
-        results: results,
+        results: allMatches,
       });
-      // return results;
     };
 
   });

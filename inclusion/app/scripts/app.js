@@ -19,8 +19,12 @@ angular
     'ngSanitize',
     'ngTouch',
     'ui.bootstrap',
+    'angular-toArrayFilter',
   ])
-  .config(function ($routeProvider) {
+  .config(function ($routeProvider, $locationProvider) {
+
+    $locationProvider.html5Mode(true);
+
     $routeProvider
       .when('/', {
         templateUrl: 'views/main.html',
@@ -33,7 +37,7 @@ angular
         controller: 'AboutCtrl',
         controllerAs: 'about'
       })
-      .when('/contact', {
+      .when('/feedback', {
         templateUrl: 'views/contact.html',
       })
       // .when('/initiatives', {
