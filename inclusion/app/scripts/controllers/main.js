@@ -8,7 +8,7 @@
  * Controller of the inclusionApp
  */
 angular.module('inclusionApp')
-  .controller('MainCtrl', function($scope, $http, $location, $rootScope, $q) {
+  .controller('MainCtrl', function($scope, $http, $location, $rootScope, $q, $compile) {
     // this.awesomeThings = [
     //   'HTML5 Boilerplate',
     //   'AngularJS',
@@ -22,6 +22,22 @@ angular.module('inclusionApp')
     $scope.queryObj = {
       query: ''
     };
+
+    $scope.clearSearch = function () {
+      $scope.initiatives.forEach(function (init) {
+        init.nonResult = false;
+      });
+      $scope.sourceCategoryNames.forEach(function (ctNm) {
+        Object.keys($scope.sourceCategories[ctNm]).forEach(function (k) {
+          $scope.sourceCategories[ctNm][k].nonResult = false;
+        });
+      });
+      d3.selectAll('.node').classed('search-result search-non-result', false)
+        .attr('class', 'node');
+      $scope.queryObj = {
+        query: ''
+      };
+    }
 
     $scope.typeAsClassName = function (val) {
       if (val) {
@@ -50,6 +66,8 @@ angular.module('inclusionApp')
       d3.selectAll('.clicked-node').classed('clicked-node', false);
       d3.selectAll('.connected-link-clicked').classed('connected-link-clicked', false);
       $scope.selectedNode = {};
+      $scope.clearSearch();
+      $location.search('node', null);
     };
 
     var svg = d3.select('#initiatives-vis').append('svg')
@@ -95,9 +113,12 @@ angular.module('inclusionApp')
     $scope.sourceCategoryNames = ['Inclusive Excellence area', 'constituent group', 'College or VP'];
     window.ctgyNames = $scope.sourceCategoryNames;
 
+    $scope.hovering = {};
+
     // var legend = '';//'<li class="legend-item legend-item-Program"><i class="fa fa-stop"></i>Programs and Initiatives</li>';
     $scope.sourceCategoryNames.forEach(function (ctNm) {
       $scope.legend.push(ctNm);
+      $scope.hovering[ctNm] = false;
       // legend = legend + '<li class="legend-item legend-item-' + $scope.typeAsClassName(ctNm) + '"><i class="fa fa-stop"></i>' + ctNm + '</li>';
     });
     $scope.legend.push('Program');
@@ -159,12 +180,14 @@ angular.module('inclusionApp')
           $scope.sourceCategories[property][value].initiatives.push(initiative);
         } else {
           var idx = $scope.graph.nodes.length;
+          $scope.sourceCategories[property][value] = {initiatives:[initiative], name: value, nonResult: false};
           $scope.graph.nodes.push({
             name: value,
             type: property,
             nodeIdx: idx,
+            entity: $scope.sourceCategories[property][value],
           });
-          $scope.sourceCategories[property][value] = {nodeIdx: idx, initiatives:[initiative], name: value, nonResult: false};
+          $scope.sourceCategories[property][value].nodeIdx = idx;
         }
         $scope.graph.links.push([$scope.sourceCategories[property][value].nodeIdx, initiative.nodeIdx]);
       });
@@ -210,6 +233,7 @@ angular.module('inclusionApp')
 
         // console.log($scope.graph);
         $scope.nodes = $scope.graph.nodes.slice();
+        window.nodes = $scope.nodes;
         var links = [],
           bilinks = [];
 
@@ -253,6 +277,8 @@ angular.module('inclusionApp')
           .attr('class', function (d) {
             return 'node '+$scope.typeAsClassName(d.type);
           })
+          .attr('popover','I appeared on mouse enter!')
+          .attr('popover-trigger', 'mouseenter')
           .attr('r', 10)
           .attr('id', function (d) {
             return 'node-'+d.nodeIdx;
@@ -262,11 +288,15 @@ angular.module('inclusionApp')
           })
           .call(force.drag);
 
-        node.append('title')
-          .text(function(d) {
-            // console.log(d);
-            return d.name;
-          });
+        // node.append('title')
+        //   .text(function(d) {
+        //     // console.log(d);
+        //     return d.name;
+        //   });
+        // angular.element('.node').each(function (i, elem) {
+        //   // console.log(elem);
+        //   $compile(elem)($scope);
+        // });
 
         $scope.haveSelectedNode = function () {
           return Object.keys($scope.selectedNode).length > 0;
@@ -301,6 +331,7 @@ angular.module('inclusionApp')
         node.on('click', function (clicked) {
           console.log(clicked);
           $location.search('node', clicked.id);
+          // $location.path('/node/'+clicked.id);
           $scope.$apply(function () {
             $scope.setSelectedNode(clicked, d3.event);
           });
@@ -329,35 +360,40 @@ angular.module('inclusionApp')
 
         $scope.nodeNeighborIndices = function (node) {
           var results = [];
-          // if (typeof node !== 'undefined') {
-            if (node.type === 'Program') {
-              results = $scope.sourceCategoryNames.map(function (ctgyName) {
-                return node[ctgyName].map(function (ctgyValueName) {
-                  if ($scope.sourceCategories.hasOwnProperty(ctgyName) && 
-                    $scope.sourceCategories[ctgyName].hasOwnProperty(ctgyValueName) && 
-                    $scope.sourceCategories[ctgyName][ctgyValueName].hasOwnProperty('nodeIdx')) {
-                      return $scope.sourceCategories[ctgyName][ctgyValueName].nodeIdx;
-                  }
+          if (node.type === 'Program') {
+            results = $scope.sourceCategoryNames.map(function (ctgyName) {
+              return node[ctgyName].map(function (ctgyValueName) {
+                if ($scope.sourceCategories.hasOwnProperty(ctgyName) && 
+                  $scope.sourceCategories[ctgyName].hasOwnProperty(ctgyValueName) && 
+                  $scope.sourceCategories[ctgyName][ctgyValueName].hasOwnProperty('nodeIdx')) {
+                    return $scope.sourceCategories[ctgyName][ctgyValueName].nodeIdx;
+                }
+              });
+            })
+              .reduce(function (prev, curr) {
+                return prev.concat(curr);
+              });
+          } else if ($scope.hasOwnProperty('sourceCategories') && 
+              node.hasOwnProperty('type') && 
+              node.hasOwnProperty('name') && 
+              $scope.sourceCategories.hasOwnProperty(node.type) &&
+              $scope.sourceCategories[node.type].hasOwnProperty(node.name) &&
+              $scope.sourceCategories[node.type][node.name].hasOwnProperty('initiatives')) {
+                // console.log('elseif');
+                results = $scope.sourceCategories[node.type][node.name].initiatives.map(function (init) {
+                  return init.id;
                 });
-              })
-                .reduce(function (prev, curr) {
-                  return prev.concat(curr);
-                });
-            } else if ($scope.hasOwnProperty('sourceCategories') && 
-                node.hasOwnProperty('type') && 
-                node.hasOwnProperty('name') && 
-                $scope.sourceCategories.hasOwnProperty(node.type) &&
-                $scope.sourceCategories[node.type].hasOwnProperty(node.name) &&
-                $scope.sourceCategories[node.type][node.name].hasOwnProperty(initiatives)) {
-                  results = $scope.sourceCategories[node.type][node.name].initiatives.map(function (init) {
-                    return init.id;
-                  });
-            }
-          // }
+          }
+          // console.log(results);
           return results;
         };
 
         $scope.onNodeMouseEnter = function (clicked, evt) {
+          // console.log(clicked);
+          if (clicked.hasOwnProperty('nonResult') && clicked.nonResult || !clicked.hasOwnProperty('nonResult') && clicked.entity.nonResult) {
+            // console.log('hovered on nonResult');
+            return;
+          }
           $scope.hoverNode = clicked;
 
           // maybe we want to style the connected nodes as well
@@ -421,10 +457,14 @@ angular.module('inclusionApp')
           });
         });
 
+        if ($location.search().hasOwnProperty('q')) {
+          $scope.searchAllNodes($location.search().q);
+        }
+
         if ($location.search().hasOwnProperty('node')) {
-          console.log($location.search());
-          console.log($location.search().node);
-          console.log($scope.nodes[$location.search().node]);
+          // console.log($location.search());
+          // console.log($location.search().node);
+          // console.log($scope.nodes[$location.search().node]);
           $scope.clickedInitiative($scope.nodes[$location.search().node]);
         }
 
@@ -436,17 +476,19 @@ angular.module('inclusionApp')
     });
 
     $scope.searchNodes = function (query) { // change all of these to map so they return an array instead of t/f
-      console.log('query');
       var queryRegex = new RegExp('\\w*'+query+'\\w*', 'gi');
       d3.selectAll('.node').classed('search-result search-non-result', false)
         .attr('class', 'node');
 
       if (query.trim().length === 0) {
+        $location.search('q', null);
         // console.log('empty');
         $rootScope.$emit('nodeSearchResults', {
           query: query,
           results: {},
         });
+        $scope.clearSearch();
+        return;
       } else {
         // console.log('query', query);
       }
@@ -568,6 +610,24 @@ angular.module('inclusionApp')
       // });
       // return results;
 
+      d3.selectAll('.node').sort(function (a, b) {
+        if ((a.hasOwnProperty('nonResult') && a.nonResult || 
+            !a.hasOwnProperty('nonResult') && a.entity.nonResult) &&
+            (b.hasOwnProperty('nonResult') && !b.nonResult || 
+            !b.hasOwnProperty('nonResult') && !b.entity.nonResult)) { //if a is NOT a result, but b IS:
+          return -1;
+        } else if ((a.hasOwnProperty('nonResult') && !a.nonResult || 
+                  !a.hasOwnProperty('nonResult') && !a.entity.nonResult) &&
+                  (b.hasOwnProperty('nonResult') && b.nonResult || 
+                  !b.hasOwnProperty('nonResult') && b.entity.nonResult)) { //if a IS a result, but b is NOT:
+          return 1;
+        } else {
+          return 0;
+        }
+      });
+
+      $location.search('q', query);
+
       $rootScope.$emit('nodeSearchResults', {
         query: query,
         results: allMatches,
@@ -578,6 +638,7 @@ angular.module('inclusionApp')
       console.log('hoverType', $scope.typeAsClassName(typeName));
       d3.selectAll('.'+$scope.typeAsClassName(typeName))
         .classed('hover-node', true);
+      $scope.hovering[typeName] = true;
     };
 
     $scope.unHoverType = function (typeName) {
@@ -585,6 +646,11 @@ angular.module('inclusionApp')
       // d3.selectAll('.'+typeName)
       d3.selectAll('.hover-node')
         .classed('hover-node', false);
+        $scope.hovering[typeName] = false;
+    };
+
+    $scope.hovering = function (ctNm) {
+      return $scope.hovering[ctNm];
     };
 
     $scope.searchAllNodes = function (query) {
@@ -595,6 +661,14 @@ angular.module('inclusionApp')
         query: query,
       });
       return $scope.deferred.promise;
+    };
+
+    $scope.legendClass = function (typeName) {
+      var classVal = $scope.typeAsClassName(typeName);
+      if ($scope.hovering(typeName)) {
+        classVal = classVal + ' hover-legend';
+      }
+      return classVal;
     };
 
     $rootScope.$on('nodeSearchResults', function (evt, results) {

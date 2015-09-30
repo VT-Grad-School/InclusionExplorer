@@ -32,6 +32,12 @@ angular
         controllerAs: 'main',
         reloadOnSearch: false,
       })
+      .when('/node/:nodeId', {
+        templateUrl: 'views/main.html',
+        controller: 'MainCtrl',
+        controllerAs: 'main',
+        reloadOnSearch: false,
+      })
       .when('/about', {
         templateUrl: 'views/about.html',
         controller: 'AboutCtrl',

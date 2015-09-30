@@ -183,19 +183,43 @@ li.legend-item {
   list-style-type: none;
 }
 
-li.legend-item-Program i {
+li.legend-item.Program i {
   margin-right: 15px;
   color: #1f77b4;
 }
-li.legend-item-CollegeorVP i {
+li.legend-item.CollegeorVP i {
   margin-right: 15px;
   color: #2ca02c;
 }
-li.legend-item-InclusiveExcellencearea i {
+li.legend-item.InclusiveExcellencearea i {
   margin-right: 15px;
   color: #d62728;
 }
-li.legend-item-constituentgroup i {
+li.legend-item.constituentgroup i {
   margin-right: 15px;
   color: #ff7f0e;
+}
+
+.panel-heading h3 span{
+  margin-left: 15px;
+}
+.panel-heading h3 {
+  margin-left: 45px;
+}
+
+li.legend-item.Program.hover-legend  {
+  color: #1f77b4;
+}
+li.legend-item.CollegeorVP.hover-legend  {
+  color: #2ca02c;
+}
+li.legend-item.InclusiveExcellencearea.hover-legend  {
+  color: #d62728;
+}
+li.legend-item.constituentgroup.hover-legend  {
+  color: #ff7f0e;
+}
+
+ul.legend {
+  width: 250px;
 }
