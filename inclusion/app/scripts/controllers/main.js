@@ -425,7 +425,7 @@ angular.module('inclusionApp')
           }
           toolTip.style('left', (event.pageX + 0) + 'px')
             .style('top', (event.pageY - 0) + 'px')
-            .style('height', '100px');
+            .style('height', '200px');
 
           d3.selectAll('.link.n' + clicked.id).classed('connected-link', true);
         };
