@@ -637,14 +637,12 @@ angular.module('inclusionApp')
     };
 
     $scope.hoverType = function (typeName) {
-      console.log('hoverType', $scope.typeAsClassName(typeName));
       d3.selectAll('.'+$scope.typeAsClassName(typeName))
         .classed('hover-node', true);
       $scope.hovering[typeName] = true;
     };
 
     $scope.unHoverType = function (typeName) {
-      console.log('unHoverType', $scope.typeAsClassName(typeName));
       // d3.selectAll('.'+typeName)
       d3.selectAll('.hover-node')
         .classed('hover-node', false);
