@@ -239,4 +239,8 @@ ul.legend {
 
 .inclusion svg {
   /*margin-top: -100px;*/
+@media (max-width: 768px) {
+  .github-badge {
+    display: none;
+  }
 }
