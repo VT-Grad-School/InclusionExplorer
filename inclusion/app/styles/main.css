@@ -239,6 +239,13 @@ ul.legend {
 
 .inclusion svg {
   /*margin-top: -100px;*/
+}
+
+.inclusion .sidebar .fa-times-circle.form-control-feedback {
+  right: 10px;
+  pointer-events: auto;
+}
+
 @media (max-width: 768px) {
   .github-badge {
     display: none;

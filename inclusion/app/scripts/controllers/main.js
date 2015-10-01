@@ -24,6 +24,7 @@ angular.module('inclusionApp')
     };
 
     $scope.clearSearch = function () {
+      $location.search('q', null);
       $scope.initiatives.forEach(function (init) {
         init.nonResult = false;
       });
@@ -97,6 +98,7 @@ angular.module('inclusionApp')
     }
 
     $scope.clickedInitiative = function (initiative, event) {
+      $location.search('node', initiative.nodeIdx);
       $scope.setSelectedNode(initiative, event);
       $scope.hoverNode = {};
       $scope.onNodeMouseLeave();

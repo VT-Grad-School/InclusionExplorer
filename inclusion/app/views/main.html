@@ -32,6 +32,7 @@
             typeahead-min-length="0" 
             typeahead-wait-ms="200" 
             placeholder="Search Inclusion at VT">
+            <span class="fa fa-times-circle form-control-feedback" ng-if="queryObj.query && queryObj.query.length > 0" aria-hidden="true" ng-click="clearSearch()"></span>
           <i ng-show="searchingNodes" class="fa fa-refresh"></i>
           <div ng-show="noNodesFound && query.length > 0">
             <i class="fa fa-times"></i> No Results Found
@@ -47,7 +48,7 @@
           </accordion-heading>
           <ul>
             <li ng-repeat="item in sourceCategories[ctgyName] | toArray | orderBy: 'name'" ng-class="{'list-item-non-result': item.nonResult}">
-              <a ng-href="/?node={{item.nodeIdx}}" ng-mouseenter="onNodeMouseEnter(graph.nodes[item.nodeIdx], $event)" ng-mouseleave="onNodeMouseLeave()" ng-click="clickedInitiative(nodes[item.nodeIdx], $event)">{{item.name}}</a>
+              <a ng-mouseenter="onNodeMouseEnter(graph.nodes[item.nodeIdx], $event)" ng-mouseleave="onNodeMouseLeave()" ng-click="clickedInitiative(nodes[item.nodeIdx], $event)">{{item.name}}</a>
             </li>
           </ul>
         </accordion-group>
@@ -59,7 +60,7 @@
           </accordion-heading> 
           <ul>
             <li ng-repeat="initiative in initiatives | orderBy:'name'" ng-if="!initiative.nonResult">
-              <a ng-href="/?node={{initiative.nodeIdx}}" ng-mouseenter="onNodeMouseEnter(graph.nodes[initiative.nodeIdx], $event)" ng-mouseleave="onNodeMouseLeave()" ng-click="clickedInitiative(graph.nodes[initiative.nodeIdx], $event)">{{initiative.name}}</a>
+              <a ng-mouseenter="onNodeMouseEnter(graph.nodes[initiative.nodeIdx], $event)" ng-mouseleave="onNodeMouseLeave()" ng-click="clickedInitiative(graph.nodes[initiative.nodeIdx], $event)">{{initiative.name}}</a>
             </li>
           </ul>         
         </accordion-group>
@@ -84,7 +85,7 @@
               <accordion-heading><i class="accordion-chevron fa" ng-class="{'fa-chevron-down':tabOpen[ctgyName], 'fa-chevron-right':!tabOpen[ctgyName]}"></i>{{ctgyName}} <span class="badge">{{selectedNode[ctgyName].length}}</span></accordion-heading>
               <ul>
                 <li ng-repeat="item in selectedNode[ctgyName]">
-                  <a ng-href="?node={{sourceCategories[ctgyName][item].nodeIdx}}" ng-mouseenter="onNodeMouseEnter(graph.nodes[sourceCategories[ctgyName][item].nodeIdx], $event)" ng-mouseleave="onNodeMouseLeave()" ng-click="clickedInitiative(nodes[sourceCategories[ctgyName][item].nodeIdx], $event)">{{item}}</a>
+                  <a ng-mouseenter="onNodeMouseEnter(graph.nodes[sourceCategories[ctgyName][item].nodeIdx], $event)" ng-mouseleave="onNodeMouseLeave()" ng-click="clickedInitiative(nodes[sourceCategories[ctgyName][item].nodeIdx], $event)">{{item}}</a>
                 </li>
               </ul>
             </accordion-group>
@@ -94,7 +95,7 @@
               </accordion-heading>
               <ul>
                 <li ng-repeat="initiative in sourceCategories[selectedNode.type][selectedNode.name].initiatives">
-                  <a ng-href="?node={{initiative.nodeIdx}}" ng-mouseenter="onNodeMouseEnter(graph.nodes[initiative.nodeIdx], $event)" ng-mouseleave="onNodeMouseLeave()" ng-click="clickedInitiative(nodes[initiative.nodeIdx], $event)">{{initiative.name}}</a>
+                  <a ng-mouseenter="onNodeMouseEnter(graph.nodes[initiative.nodeIdx], $event)" ng-mouseleave="onNodeMouseLeave()" ng-click="clickedInitiative(nodes[initiative.nodeIdx], $event)">{{initiative.name}}</a>
                 </li>
               </ul>
             </accordion-group>
