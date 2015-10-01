@@ -6,6 +6,12 @@ angular.module('inclusionApp')
       replace: true,
       templateUrl: 'views/directives/navigation.html',
       link: function ($scope) {
+
+        $scope.isActive = function (path) {
+          console.log('path', path);
+          console.log($location.path());
+          return $location.path() === path;
+        };
         // $scope.$watch('searchQuery', function (newVal) {
         //   $rootScope.$emit('searchNodes', {
         //     query: newVal,

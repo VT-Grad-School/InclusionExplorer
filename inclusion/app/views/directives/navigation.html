@@ -2,33 +2,21 @@
   <div class="navbar navbar-inverse" role="navigation">
     <div class="container-fluid">
       <div class="navbar-header">
-
         <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#js-navbar-collapse">
           <span class="sr-only">Toggle navigation</span>
           <span class="icon-bar"></span>
           <span class="icon-bar"></span>
           <span class="icon-bar"></span>
         </button>
-
-        <a class="navbar-brand" href="/">Inclusive VT Explorer</a>
+        <a class="navbar-brand" ng-href="/">Inclusive VT Explorer</a>
       </div>
 
       <div class="collapse navbar-collapse" id="js-navbar-collapse">
-
         <ul class="nav navbar-nav">
-          <li class="active"><a href="/">Home</a></li>
-          <li><a ng-href="about">About</a></li>
-          <li><a ng-href="feedback">Feedback</a></li>
+          <li ng-class="{'active': isActive('/')}"><a ng-href="/">Home</a></li>
+          <li ng-class="{'active': isActive('/about')}"><a ng-href="/about">About</a></li>
+          <li ng-class="{'active': isActive('/feedback')}"><a ng-href="/feedback">Feedback</a></li>
         </ul>
-        <!-- <form class="navbar-form navbar-right" role="search" ng-if="location.path() === '/'">
-          <div class="form-group">
-            <input type="text" ng-model="searchResult" typeahead="result for result in searchNodes($viewValue)" typeahead-loading="searchingNodes" typeahead-no-results="noNodesFound" typeahead-min-length="0" typeahead-wait-ms="100" class="form-control" placeholder="Search Inclusion at VT">
-            <i ng-show="searchingNodes" class="fa fa-refresh"></i>
-            <div ng-show="noNodesFound && query.length > 0">
-              <i class="fa fa-times"></i> No Results Found
-            </div>
-          </div>
-        </form> -->
       </div>
     </div>
   </div>
