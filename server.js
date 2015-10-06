@@ -83,7 +83,7 @@ function splitTrimAndAccumulateUniqueValues (property, initiative) { //property:
 //   });
 // });
 
-var PORT = 3300;
+var PORT = 80;
 http.listen(PORT, function() {
   console.log('listening on *:', PORT);
 });
