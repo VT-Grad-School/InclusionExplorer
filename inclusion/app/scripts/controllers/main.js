@@ -54,7 +54,8 @@ angular.module('inclusionApp')
 
     var toolTip = d3.select(document.getElementById('toolTip'));
     var width = 800,
-      height = 600;
+      height = 600,
+      NODE_RADIUS = 10;
 
     var color = d3.scale.category10();
 
@@ -281,7 +282,7 @@ angular.module('inclusionApp')
           })
           .attr('popover','I appeared on mouse enter!')
           .attr('popover-trigger', 'mouseenter')
-          .attr('r', 10)
+          .attr('r', NODE_RADIUS)
           .attr('id', function (d) {
             return 'node-'+d.nodeIdx;
           })
@@ -455,7 +456,7 @@ angular.module('inclusionApp')
             return 'M' + d[0].x + ',' + d[0].y + 'S' + d[1].x + ',' + d[1].y + ' ' + d[2].x + ',' + d[2].y;
           });
           node.attr('transform', function(d) {
-            return 'translate(' + d.x + ',' + d.y + ')';
+            return 'translate(' + Math.max(NODE_RADIUS, Math.min(width - NODE_RADIUS, d.x)) + ',' + Math.max(NODE_RADIUS, Math.min(height - NODE_RADIUS, d.y)) + ')';
           });
         });
 
