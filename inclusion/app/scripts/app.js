@@ -20,8 +20,12 @@ angular
     'ngTouch',
     'ui.bootstrap',
     'angular-toArrayFilter',
+    'angulartics',
+    'angulartics.google.analytics'
   ])
   .config(function ($routeProvider, $locationProvider) {
+
+    // $analyticsProvider.setUsername('UA-68605107-1');
 
     $locationProvider.html5Mode(true);
 

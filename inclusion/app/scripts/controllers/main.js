@@ -50,18 +50,19 @@ angular.module('inclusionApp')
 
     $scope.legend = [];
     // window.selectedNode = $scope.selectedNode;
-    // console.log(window.selectedNode === new Object());
 
-    var toolTip = d3.select(document.getElementById('toolTip'));
+    // var toolTip = d3.select(document.getElementById('toolTip'));
     var width = 800,
       height = 600,
-      NODE_RADIUS = 10;
+      NODE_RADIUS = 10,
+      NODE_HOVER_RADIUS = 17;
 
     var color = d3.scale.category10();
 
     var force = d3.layout.force()
       .linkDistance(2)
       .linkStrength(2)
+      .gravity(0.28)
       .size([width, height]);
 
     $scope.unSetSelectedNode = function () {
@@ -76,7 +77,6 @@ angular.module('inclusionApp')
       .attr('width', width)
       .attr('height', height)
       .on('click', function () {
-        console.log('clicked svg');
         $scope.$apply(function () {
           $location.search('node', null);
           $scope.unSetSelectedNode();
@@ -88,9 +88,13 @@ angular.module('inclusionApp')
 
     
 
-    function splitAndTrim (sourceStr) {
+    function splitAndTrim (sourceStr, sep) {
+      var separator = ';';
+      if (sep) {
+        separator = sep;
+      }
       if (sourceStr) {
-        return sourceStr.split(';').map(function (item) {
+        return sourceStr.split(separator).map(function (item) {
           return item.trim().replace(/:/g,'');
         });
       } else {
@@ -113,7 +117,7 @@ angular.module('inclusionApp')
     };
     // $scope.nodes = {};
 
-    $scope.sourceCategoryNames = ['Inclusive Excellence area', 'constituent group', 'College or VP'];
+    $scope.sourceCategoryNames = ['Inclusive Excellence area', 'Constituency', 'College or VP'];
     window.ctgyNames = $scope.sourceCategoryNames;
 
     $scope.hovering = {};
@@ -133,10 +137,12 @@ angular.module('inclusionApp')
 
 
     $scope.types = {};
-    $scope.types[$scope.sourceCategoryNames[0]] = 3;
-    $scope.types[$scope.sourceCategoryNames[1]] = 1;
-    $scope.types[$scope.sourceCategoryNames[2]] = 2;
+    $scope.types[$scope.sourceCategoryNames[0]] = '#d62728';
+    $scope.types[$scope.sourceCategoryNames[1]] = '#ff7f0e';
+    $scope.types[$scope.sourceCategoryNames[2]] = '#2ca02c';
+    $scope.types['Program'] = '#1f77b4';
     $scope.Program = 0;
+    window.entityTypes = $scope.types;
 
     $scope.tabOpen = {};
     $scope.resetTabOpen = function (selectedNode) {
@@ -174,9 +180,10 @@ angular.module('inclusionApp')
       nodes: [],
       links: [],
     };
+    window.graphNodes = $scope.graph.nodes;
 
-    $scope.splitTrimAndAccumulateUniqueValues = function (property, initiative) { //property: area or const group or sponsor
-      var results = splitAndTrim(initiative[property]);
+    $scope.splitTrimAndAccumulateUniqueValues = function (property, initiative, sep) { //property: area or const group or sponsor
+      var results = splitAndTrim(initiative[property], sep);
       results.forEach(function (value) { // e.g. a list of areas 
         value = value.replace(/Dialogue/, 'Relations'); //normalize the area
         if ($scope.sourceCategories[property].hasOwnProperty(value)) { //if we already know about this (e.g.) area, 
@@ -188,6 +195,7 @@ angular.module('inclusionApp')
             name: value,
             type: property,
             nodeIdx: idx,
+            hovering: false,
             entity: $scope.sourceCategories[property][value],
           });
           $scope.sourceCategories[property][value].nodeIdx = idx;
@@ -206,16 +214,16 @@ angular.module('inclusionApp')
       $scope.$apply(function () {
         $scope.initiatives = initiatives;
         window.initiatives = $scope.initiatives;
-        // console.log($scope.initiatives);
         $scope.initiatives.forEach(function (initiative) {
           initiative.nodeIdx = $scope.graph.nodes.length;
           $scope.graph.nodes.push(initiative);
           initiative.nonResult = false;
           initiative['Inclusive Excellence area'] = $scope.splitTrimAndAccumulateUniqueValues('Inclusive Excellence area', initiative);
-          initiative['constituent group'] = $scope.splitTrimAndAccumulateUniqueValues('constituent group', initiative);
+          initiative['Constituency'] = $scope.splitTrimAndAccumulateUniqueValues('Constituency', initiative);
           initiative['College or VP'] = $scope.splitTrimAndAccumulateUniqueValues('College or VP', initiative);
           initiative.name = initiative['Program Name'];
           initiative.type = 'Program';
+          initiative.hovering = false;
           $scope.richInitiativeData[initiative['Program Name']] = initiative;
         });
         window.graph = $scope.graph;
@@ -234,14 +242,12 @@ angular.module('inclusionApp')
 
         // create links between these higher-level nodes and the associated program nodes
 
-        // console.log($scope.graph);
         $scope.nodes = $scope.graph.nodes.slice();
         window.nodes = $scope.nodes;
         var links = [],
           bilinks = [];
 
         $scope.graph.links.forEach(function(link) {
-          // console.log(nodes[link[0]]);
           var s = $scope.nodes[link[0]],
             t = $scope.nodes[link[1]],
             i = {}; // intermediate node
@@ -268,7 +274,6 @@ angular.module('inclusionApp')
           .enter().append('path')
           .attr('class', function(currentLink) {
             var classes = ['link'];
-            // console.log(currentLink);
             classes.push('n' + currentLink[0].id);
             classes.push('n' + currentLink[2].id);
             return classes.join(' ');
@@ -280,26 +285,36 @@ angular.module('inclusionApp')
           .attr('class', function (d) {
             return 'node '+$scope.typeAsClassName(d.type);
           })
-          .attr('popover','I appeared on mouse enter!')
-          .attr('popover-trigger', 'mouseenter')
+          .attr('popover', function (d) {
+            return d.name;
+          })
+          .attr('popover-is-open', function (d) {
+            return 'graph.nodes['+d.nodeIdx+'].hovering';
+          })
+          .attr('popover-title', function (d) {
+            return d.type;
+          })
+          .attr('popover-append-to-body', true)
+          // .attr('popover-trigger', 'none')
           .attr('r', NODE_RADIUS)
           .attr('id', function (d) {
             return 'node-'+d.nodeIdx;
           })
           .style('fill', function(d) {
-            return color($scope.types[d.type]);
+            var theColor = $scope.types[d.type];
+            if (d.type === 'College or VP') {
+            }
+            return theColor;
           })
           .call(force.drag);
 
         // node.append('title')
         //   .text(function(d) {
-        //     // console.log(d);
         //     return d.name;
         //   });
-        // angular.element('.node').each(function (i, elem) {
-        //   // console.log(elem);
-        //   $compile(elem)($scope);
-        // });
+        angular.element('.node').each(function (i, elem) {
+          $compile(elem)($scope);
+        });
 
         $scope.haveSelectedNode = function () {
           return Object.keys($scope.selectedNode).length > 0;
@@ -332,7 +347,6 @@ angular.module('inclusionApp')
         };
 
         node.on('click', function (clicked) {
-          console.log(clicked);
           $location.search('node', clicked.id);
           // $location.path('/node/'+clicked.id);
           $scope.$apply(function () {
@@ -352,7 +366,6 @@ angular.module('inclusionApp')
 
         $scope.visibleEntities = function (ctgyName) {
           return Object.keys($scope.sourceCategories[ctgyName]).reduce(function (prev, curr, i, arr) {
-            // console.log($scope.sourceCategories[ctgyName][arr[i]]);
             if ($scope.sourceCategories[ctgyName][arr[i]].nonResult) {
               return prev;
             } else {
@@ -382,19 +395,15 @@ angular.module('inclusionApp')
               $scope.sourceCategories.hasOwnProperty(node.type) &&
               $scope.sourceCategories[node.type].hasOwnProperty(node.name) &&
               $scope.sourceCategories[node.type][node.name].hasOwnProperty('initiatives')) {
-                // console.log('elseif');
                 results = $scope.sourceCategories[node.type][node.name].initiatives.map(function (init) {
                   return init.id;
                 });
           }
-          // console.log(results);
           return results;
         };
 
         $scope.onNodeMouseEnter = function (clicked, evt) {
-          // console.log(clicked);
           if (clicked.hasOwnProperty('nonResult') && clicked.nonResult || !clicked.hasOwnProperty('nonResult') && clicked.entity.nonResult) {
-            // console.log('hovered on nonResult');
             return;
           }
           $scope.hoverNode = clicked;
@@ -413,9 +422,9 @@ angular.module('inclusionApp')
             d3.select('#node-'+neighborNodeId).classed('hover-node', true);
           });
 
-          toolTip.transition()
-            .duration(200)
-            .style('opacity', '.9');
+          // toolTip.transition()
+          //   .duration(200)
+          //   .style('opacity', '.9');
 
           $scope.head = clicked.name;
           $scope.header2 = clicked;
@@ -426,11 +435,14 @@ angular.module('inclusionApp')
               pageY: clicked.y,
             };
           }
-          toolTip.style('left', (event.pageX + 0) + 'px')
-            .style('top', (event.pageY - 0) + 'px')
-            .style('height', '200px');
+          // toolTip.style('left', (event.pageX + 0) + 'px')
+          //   .style('top', (event.pageY - 0) + 'px')
+          //   .style('height', '200px');
 
           d3.selectAll('.link.n' + clicked.id).classed('connected-link', true);
+          // var hoverElem = angular.element('#node-'+clicked.id);
+          // hoverElem.trigger('mouseenter');
+          $scope.graph.nodes[clicked.id].hovering = true;
         };
 
         node.on('mouseover', function(clicked) {
@@ -439,24 +451,33 @@ angular.module('inclusionApp')
           });
         });
 
-        $scope.onNodeMouseLeave = function () {
+        $scope.onNodeMouseLeave = function (node) {
           d3.selectAll('.hover-node').classed('hover-node', false);
-          toolTip.transition() // declare the transition properties to fade-out the div
-            .duration(500) // it shall take 500ms
-            .style('opacity', '0'); // and go all the way to an opacity of nil
+          // toolTip.transition() // declare the transition properties to fade-out the div
+          //   .duration(500) // it shall take 500ms
+          //   .style('opacity', '0'); // and go all the way to an opacity of nil
           d3.selectAll('.link.connected-link').classed('connected-link', false);
+          // $scope.hoverNode.hovering = false;
+          $scope.graph.nodes[node.id].hovering = false;
         };
 
-        node.on('mouseout', function() {
-          $scope.onNodeMouseLeave();
+        node.on('mouseout', function(node) {
+          $scope.$apply(function () {
+            $scope.onNodeMouseLeave(node);
+          });
         });
 
         force.on('tick', function() {
           link.attr('d', function(d) {
-            return 'M' + d[0].x + ',' + d[0].y + 'S' + d[1].x + ',' + d[1].y + ' ' + d[2].x + ',' + d[2].y;
+            return 'M' + Math.max(NODE_HOVER_RADIUS, Math.min(width - NODE_HOVER_RADIUS, d[0].x)) + ',' 
+              + Math.max(NODE_HOVER_RADIUS, Math.min(height - NODE_HOVER_RADIUS, d[0].y)) 
+              + 'S' + Math.max(NODE_HOVER_RADIUS, Math.min(width - NODE_HOVER_RADIUS, d[1].x)) + ',' 
+              + Math.max(NODE_HOVER_RADIUS, Math.min(height - NODE_HOVER_RADIUS, d[1].y)) 
+              + ' ' + Math.max(NODE_HOVER_RADIUS, Math.min(width - NODE_HOVER_RADIUS, d[2].x)) + ',' 
+              + Math.max(NODE_HOVER_RADIUS, Math.min(height - NODE_HOVER_RADIUS, d[2].y));
           });
           node.attr('transform', function(d) {
-            return 'translate(' + Math.max(NODE_RADIUS, Math.min(width - NODE_RADIUS, d.x)) + ',' + Math.max(NODE_RADIUS, Math.min(height - NODE_RADIUS, d.y)) + ')';
+            return 'translate(' + Math.max(NODE_HOVER_RADIUS, Math.min(width - NODE_HOVER_RADIUS, d.x)) + ',' + Math.max(NODE_HOVER_RADIUS, Math.min(height - NODE_HOVER_RADIUS, d.y)) + ')';
           });
         });
 
@@ -465,9 +486,6 @@ angular.module('inclusionApp')
         }
 
         if ($location.search().hasOwnProperty('node')) {
-          // console.log($location.search());
-          // console.log($location.search().node);
-          // console.log($scope.nodes[$location.search().node]);
           $scope.clickedInitiative($scope.nodes[$location.search().node]);
         }
 
@@ -485,7 +503,6 @@ angular.module('inclusionApp')
 
       if (query.trim().length === 0) {
         $location.search('q', null);
-        // console.log('empty');
         $rootScope.$emit('nodeSearchResults', {
           query: query,
           results: {},
@@ -493,7 +510,6 @@ angular.module('inclusionApp')
         $scope.clearSearch();
         return;
       } else {
-        // console.log('query', query);
       }
       var allMatches = {};
       $scope.initiatives.forEach(function (initiative) {
@@ -501,8 +517,6 @@ angular.module('inclusionApp')
         // var result = Object.keys(initiative).forEach(function (property) {
         Object.keys(initiative).forEach(function (property) {
           if (property === 'name' || 'Description') {
-            // debugger;
-            // console.log(initiative[property]);
             // var matchesForProp = {};
             if (initiative[property] instanceof Array) {
               initiative[property].forEach(function (item) {
@@ -521,16 +535,13 @@ angular.module('inclusionApp')
                   });
                 }
                 // var result = item.toUpperCase().indexOf(query.toUpperCase()) > -1;
-                // console.log('innermost result', result);
                 // return result;
                 // return matches;
               }); 
-              // console.log('if result', result);
               // return matchesForProp;
             } else {
               if (initiative[property] && typeof initiative[property].toUpperCase === 'function') {
                 // var result = initiative[property].toUpperCase().indexOf(query.toUpperCase()) > -1;
-                // console.log('else result', result);
                 // return result;
                 var matches = initiative[property].match(queryRegex)
                 if (matches) {
@@ -548,26 +559,20 @@ angular.module('inclusionApp')
                 }
                 // return matches;
               } else {
-                // console.log('nonarray false');
                 // return [];
               }
             }
             // return matchesForProp;
           }
         });
-        // console.log('outermost result', result);
         
-        // console.log('allMatches', allMatches);
-        // console.log(result);
         if (Object.keys(initResults).length > 0) {
           initiative.nonResult = false;
-          // console.log('if', d3.select('#node-'+initiative.nodeIdx));
           d3.select('#node-'+initiative.nodeIdx)
             .attr('class', 'node search-result')
             .classed('search-result', true);
         } else {
           initiative.nonResult = true;
-          // console.log(initiative);
           d3.select('#node-'+initiative.nodeIdx)
             .attr('class', 'node search-non-result')
             .classed('search-non-result', true);
@@ -602,7 +607,6 @@ angular.module('inclusionApp')
         });
       });
 
-      // console.log(allMatches);
 
       // d3.selectAll('.node:not(.search-result)').classed('search-non-result', true)
       //   .attr('class', 'node search-non-result'); //this is why non program nodes gray out even thoguh they're not being searched.
@@ -656,7 +660,6 @@ angular.module('inclusionApp')
 
     $scope.searchAllNodes = function (query) {
       $scope.query = query;
-      // console.log('searchNode', query.length);
       $scope.deferred = $q.defer();
       $rootScope.$emit('searchNodes', {
         query: query,
@@ -673,7 +676,6 @@ angular.module('inclusionApp')
     };
 
     $rootScope.$on('nodeSearchResults', function (evt, results) {
-      // console.log(results);
       $scope.deferred.resolve(Object.keys(results.results));
     });
 

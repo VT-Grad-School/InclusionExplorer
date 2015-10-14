@@ -17,6 +17,8 @@ angular.module('inclusionApp')
       'Roxanna Link',
       'Isabella Sereno Berrizbeitia',
       'Maria Elisa Christie',
+      'Trisha Smith',
+      'Cathy Grimes',
       'Nathan Self',
       'Michael Stewart',
     ];

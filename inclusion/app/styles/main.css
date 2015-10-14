@@ -133,7 +133,7 @@ path.connected-link-clicked {
   background-color: #d62728;
 }
 
-.label-constituentgroup {
+.label-Constituency {
   font-size: 12px;
   background-color: #ff7f0e;
 }
@@ -150,7 +150,7 @@ path.connected-link-clicked {
   background-color: #d62728 ! important;
 }
 
-.panel-default > .panel-heading .badge-constituentgroup {
+.panel-default > .panel-heading .badge-Constituency {
   background-color: #ff7f0e ! important;
 }
 
@@ -195,7 +195,7 @@ li.legend-item.InclusiveExcellencearea i {
   margin-right: 15px;
   color: #d62728;
 }
-li.legend-item.constituentgroup i {
+li.legend-item.Constituency i {
   margin-right: 15px;
   color: #ff7f0e;
 }
@@ -216,7 +216,7 @@ li.legend-item.CollegeorVP.hover-legend  {
 li.legend-item.InclusiveExcellencearea.hover-legend  {
   color: #d62728;
 }
-li.legend-item.constituentgroup.hover-legend  {
+li.legend-item.Constituency.hover-legend  {
   color: #ff7f0e;
 }
 
