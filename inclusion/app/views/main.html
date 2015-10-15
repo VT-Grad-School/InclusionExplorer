@@ -60,7 +60,7 @@
           </accordion-heading> 
           <ul>
             <li ng-repeat="initiative in initiatives | orderBy:'name'" ng-if="!initiative.nonResult">
-              <a ng-mouseenter="onNodeMouseEnter(graph.nodes[initiative.nodeIdx], $event)" ng-mouseleave="onNodeMouseLeave(initiative)" ng-click="clickedInitiative(graph.nodes[initiative.nodeIdx], $event)">{{initiative.name}}</a>
+              <a ng-class="{'incl-init': initiative['InclusiveVT Initiative']==='Y'}" ng-mouseenter="onNodeMouseEnter(graph.nodes[initiative.nodeIdx], $event)" ng-mouseleave="onNodeMouseLeave(initiative)" ng-click="clickedInitiative(graph.nodes[initiative.nodeIdx], $event)">{{initiative.name}}</a> <span class="label label-init" ng-if="initiative['InclusiveVT Initiative']==='Y'"><a href="http://www.inclusive.vt.edu/initiatives/index.html" target="_blank">Initiative</a></span>
             </li>
           </ul>         
         </accordion-group>
@@ -73,7 +73,7 @@
         <div class="panel-heading">
           <div>
             <button class="btn btn-default pull-left" ng-click="unSetSelectedNode()"><i class="fa fa-chevron-left"></i></button>
-            <h3>{{selectedNode.name}}<span class="label" ng-class="'label-' + typeAsClassName(selectedNode.type)">{{selectedNode.type}}</span></h3>
+            <h3>{{selectedNode.name}}<a target="_blank" ng-if="selectedNode.URL.trim().length > 0" ng-href="{{selectedNode.URL.trim()}}"><i class="fa fa-external-link"></i></a><span class="label" ng-class="'label-' + typeAsClassName(selectedNode.type)">{{selectedNode.type}}</span></h3>
           </div>
         </div>
         <div class="panel-body">

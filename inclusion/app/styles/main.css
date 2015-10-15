@@ -251,3 +251,16 @@ ul.legend {
     display: none;
   }
 }
+
+.incl-init {
+  font-weight: bold;
+}
+
+.label.label-init, .label.label-init a {
+  background-color: #660000;
+  color: #ff6600;
+}
+
+i.fa-external-link {
+  margin-left: 10px;
+}
