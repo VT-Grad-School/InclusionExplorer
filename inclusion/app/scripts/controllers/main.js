@@ -308,6 +308,13 @@ angular.module('inclusionApp')
           })
           .call(force.drag);
 
+        node.append('text')
+          .html(function (d) {
+            // debugger;
+            // console.log(d);
+            return '<h1>'+d.type+': '+d.name+'</h1><p>'+d.Description+'</p>';
+          });
+
         // node.append('title')
         //   .text(function(d) {
         //     return d.name;
