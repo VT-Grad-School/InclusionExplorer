@@ -9,7 +9,7 @@ var d3 = require('d3');
 app.use(express.static(__dirname + '/inclusion/app'));
 app.use('/bower_components', express.static(__dirname + '/inclusion/bower_components'));
 app.use(express.static(__dirname + '/Political Influence Data Visualization D3.js_files'));
-app.use('*', express.static(__dirname + '/inclusion/app/index.html'));
+app.use('/', express.static(__dirname + '/inclusion/app/index.html'));
 
 app.set('views', './views');
 app.set('view engine', 'jade');
@@ -83,7 +83,7 @@ function splitTrimAndAccumulateUniqueValues (property, initiative) { //property:
 //   });
 // });
 
-var PORT = 80;
+var PORT = process.argv[2];
 http.listen(PORT, function() {
   console.log('listening on *:', PORT);
 });
